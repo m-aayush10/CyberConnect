@@ -1,4 +1,4 @@
-from app import mysql
+from db import mysql
 
 def get_user_by_email(email):
     cur = mysql.connection.cursor()

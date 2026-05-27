@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to CyberConnect{% endblock %}
+
+{% block content %}
+<div class="text-center py-20">
+    <h1 class="text-5xl font-bold text-blue-600 mb-4">CyberConnect</h1>
+    <p class="text-xl text-gray-600 mb-8">Professional Networking Platform for Cybersecurity Students</p>
+    <div class="space-x-4">
+        <a href="{{ url_for('auth.register') }}" class="bg-blue-600 text-white px-6 py-3 rounded-lg">Get Started</a>
+        <a href="{{ url_for('auth.login') }}" class="bg-gray-600 text-white px-6 py-3 rounded-lg">Login</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberConnect - {% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-xl font-bold text-blue-600">CyberConnect</div>
+                <div class="space-x-4">
+                    {% if session.user_id %}
+                        <a href="{{ url_for('dashboard') }}" class="text-gray-700">Dashboard</a>
+                        <a href="{{ url_for('posts.feed') }}" class="text-gray-700">Feed</a>
+                        <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="text-gray-700">Profile</a>
+                        <a href="{{ url_for('auth.logout') }}" class="bg-red-500 text-white px-3 py-1 rounded">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="text-gray-700">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="bg-blue-600 text-white px-3 py-1 rounded">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="container mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-3 rounded {% if category == 'success' %}bg-green-100 text-green-700{% elif category == 'danger' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

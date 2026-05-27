@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import dotenv
-from flask_mysqldb import MySQL
+from db import mysql
 
 dotenv.load_dotenv()
 
@@ -13,7 +13,7 @@ app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
 app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
-mysql = MySQL(app)
+mysql.init_app(app)
 
 from routes.auth import auth_bp
 from routes.profile import profile_bp
@@ -21,18 +21,15 @@ from routes.posts import posts_bp
 from routes.connections import connections_bp
 from routes.admin import admin_bp
 
-
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(posts_bp, url_prefix='/posts')
 app.register_blueprint(connections_bp, url_prefix='/connections')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -42,5 +39,3 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
