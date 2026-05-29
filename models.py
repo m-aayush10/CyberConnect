@@ -32,3 +32,29 @@ def update_user_profile(user_id, bio=None, profile_image=None):
         cur.execute("UPDATE users SET profile_image = %s WHERE id = %s", (profile_image, user_id))
     mysql.connection.commit()
     cur.close()
+
+# ========== NEW SKILLS FUNCTIONS (paste below) ==========
+def add_skill(user_id, skill_name, level='Beginner'):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO skills (user_id, skill_name, level) VALUES (%s, %s, %s)",
+                    (user_id, skill_name, level))
+        mysql.connection.commit()
+        cur.close()
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+def get_user_skills(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, skill_name, level FROM skills WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
+    skills = cur.fetchall()
+    cur.close()
+    return skills
+
+def delete_skill(skill_id, user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM skills WHERE id = %s AND user_id = %s", (skill_id, user_id))
+    mysql.connection.commit()
+    cur.close()
