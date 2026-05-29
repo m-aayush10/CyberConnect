@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded shadow p-6">
+    <div class="flex items-center space-x-4">
+        <div class="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-3xl">👤</div>
+        <div>
+            <h1 class="text-2xl font-bold">{{ user.name }}</h1>
+            <p class="text-gray-600">{{ user.email }}</p>
+            <p class="mt-2">{{ user.bio or "No bio yet." }}</p>
+        </div>
+    </div>
+    
+    {% if session.user_id == user.id %}
+    <div class="mt-4">
+        <a href="{{ url_for('profile.edit_profile') }}" class="bg-blue-600 text-white px-4 py-2 rounded">Edit Profile</a>
+    </div>
+    {% endif %}
+    
+    <!-- Skills Section -->
+    <div class="mt-6">
+        <h3 class="text-xl font-bold mb-3">Cybersecurity Skills</h3>
+        
+        {% if session.user_id == user.id %}
+        <form method="POST" action="{{ url_for('profile.add_skill') }}" class="mb-4 flex gap-2">
+            <input type="text" name="skill_name" placeholder="e.g., Penetration Testing" required class="flex-1 p-2 border rounded">
+            <select name="level" class="p-2 border rounded">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+                <option value="Expert">Expert</option>
+            </select>
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Add</button>
+        </form>
+        {% endif %}
+        
+        <div class="flex flex-wrap gap-2">
+            {% for skill in user.skills %}
+            <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
+                {{ skill.skill_name }} ({{ skill.level }})
+                {% if session.user_id == user.id %}
+                <a href="{{ url_for('profile.delete_skill', skill_id=skill.id) }}" class="text-red-600 hover:text-red-800" onclick="return confirm('Remove this skill?')">×</a>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="text-gray-500">No skills added yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
