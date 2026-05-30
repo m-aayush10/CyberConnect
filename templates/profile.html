@@ -1,47 +1,48 @@
+cat > templates/profile.html << 'EOF'
 {% extends "base.html" %}
 
 {% block title %}Profile{% endblock %}
 
 {% block content %}
-<div class="bg-white rounded shadow p-6">
+<div class="glass-card rounded-2xl p-6">
     <div class="flex items-center space-x-4">
-        <div class="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-3xl">👤</div>
+        <div class="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center text-3xl border border-cyan-500/30">👤</div>
         <div>
-            <h1 class="text-2xl font-bold">{{ user.name }}</h1>
-            <p class="text-gray-600">{{ user.email }}</p>
-            <p class="mt-2">{{ user.bio or "No bio yet." }}</p>
+            <h1 class="text-2xl font-bold cyber-text">{{ user.name }}</h1>
+            <p class="text-gray-400">{{ user.email }}</p>
+            <p class="mt-2 text-gray-300">{{ user.bio or "No bio yet." }}</p>
         </div>
     </div>
     
     {% if session.user_id == user.id %}
     <div class="mt-4">
-        <a href="{{ url_for('profile.edit_profile') }}" class="bg-blue-600 text-white px-4 py-2 rounded">Edit Profile</a>
+        <a href="{{ url_for('profile.edit_profile') }}" class="btn-cyber text-white px-4 py-2 rounded inline-block">Edit Profile</a>
     </div>
     {% endif %}
     
     <!-- Skills Section -->
-    <div class="mt-6">
-        <h3 class="text-xl font-bold mb-3">Cybersecurity Skills</h3>
+    <div class="mt-8">
+        <h3 class="text-xl font-bold mb-3 text-cyan-400">🛡️ Cybersecurity Skills</h3>
         
         {% if session.user_id == user.id %}
         <form method="POST" action="{{ url_for('profile.add_skill') }}" class="mb-4 flex gap-2">
-            <input type="text" name="skill_name" placeholder="e.g., Penetration Testing" required class="flex-1 p-2 border rounded">
-            <select name="level" class="p-2 border rounded">
+            <input type="text" name="skill_name" placeholder="e.g., Penetration Testing" required class="flex-1 p-2 rounded bg-gray-800 border border-cyan-500/30 text-white">
+            <select name="level" class="p-2 rounded bg-gray-800 border border-cyan-500/30 text-white">
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate">Intermediate</option>
                 <option value="Advanced">Advanced</option>
                 <option value="Expert">Expert</option>
             </select>
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Add</button>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">+ Add</button>
         </form>
         {% endif %}
         
         <div class="flex flex-wrap gap-2">
             {% for skill in user.skills %}
-            <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
+            <div class="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full flex items-center gap-2 border border-cyan-500/30">
                 {{ skill.skill_name }} ({{ skill.level }})
                 {% if session.user_id == user.id %}
-                <a href="{{ url_for('profile.delete_skill', skill_id=skill.id) }}" class="text-red-600 hover:text-red-800" onclick="return confirm('Remove this skill?')">×</a>
+                <a href="{{ url_for('profile.delete_skill', skill_id=skill.id) }}" class="text-red-400 hover:text-red-600" onclick="return confirm('Remove this skill?')">×</a>
                 {% endif %}
             </div>
             {% else %}
@@ -49,5 +50,47 @@
             {% endfor %}
         </div>
     </div>
+    
+    <!-- Certifications Section -->
+    <div class="mt-8">
+        <h3 class="text-xl font-bold mb-3 text-purple-400">🎓 Certifications</h3>
+        
+        {% if session.user_id == user.id %}
+        <form method="POST" action="{{ url_for('profile.add_certification') }}" class="mb-4 p-4 glass-card rounded-lg">
+            <div class="grid md:grid-cols-2 gap-3">
+                <input type="text" name="title" placeholder="Certification Title (e.g., CEH)" required class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
+                <input type="text" name="issuer" placeholder="Issuer (e.g., EC-Council)" required class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
+                <input type="date" name="date_earned" class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
+                <input type="url" name="credential_url" placeholder="Credential URL (optional)" class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
+            </div>
+            <button type="submit" class="mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition">+ Add Certification</button>
+        </form>
+        {% endif %}
+        
+        <div class="space-y-3">
+            {% for cert in user.certifications %}
+            <div class="glass-card rounded-lg p-4 border border-purple-500/30">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="font-bold text-purple-400">{{ cert.title }}</div>
+                        <div class="text-sm text-gray-400">{{ cert.issuer }}</div>
+                        {% if cert.date_earned %}
+                        <div class="text-xs text-gray-500 mt-1">Earned: {{ cert.date_earned }}</div>
+                        {% endif %}
+                        {% if cert.credential_url %}
+                        <a href="{{ cert.credential_url }}" target="_blank" class="text-xs text-cyan-400 hover:underline">Verify Credential →</a>
+                        {% endif %}
+                    </div>
+                    {% if session.user_id == user.id %}
+                    <a href="{{ url_for('profile.delete_certification', cert_id=cert.id) }}" class="text-red-500 hover:text-red-700" onclick="return confirm('Remove this certification?')">🗑️</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p class="text-gray-500">No certifications added yet.</p>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endblock %}
+EOF
