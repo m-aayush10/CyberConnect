@@ -5,14 +5,12 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <!-- Create Post Form -->
-    <div class="glass-card rounded-2xl p-4 mb-6">
-        <h2 class="text-xl font-bold mb-3 text-cyan-400">Create a Post</h2>
-        <form method="POST" action="{{ url_for('posts.create_post') }}">
-            <textarea name="content" rows="3" class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white" placeholder="Share something about cybersecurity..." required></textarea>
-            <input type="text" name="image_url" class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white mt-2" placeholder="Image URL (optional)">
-            <button type="submit" class="btn-cyber mt-3 px-6 py-2 rounded">Post</button>
-        </form>
-    </div>
+    <form method="POST" action="{{ url_for('posts.create_post') }}" enctype="multipart/form-data">
+    <textarea name="content" rows="3" class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white" placeholder="Share something about cybersecurity..." required></textarea>
+    <input type="file" name="image_file" accept="image/*" class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white mt-2">
+    <input type="text" name="image_url" class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white mt-2" placeholder="Or paste image URL (optional)">
+    <button type="submit" class="btn-cyber mt-3 px-6 py-2 rounded">Post</button>
+    </form>
 
     <!-- Display Posts -->
     {% for post in posts %}
