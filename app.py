@@ -35,7 +35,23 @@ def index():
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
-    return render_template('dashboard.html')
+    
+    # Get user's skill count
+    from models import get_user_skills
+    skills = get_user_skills(session['user_id'])
+    skill_count = len(skills) if skills else 0
+    
+    # Get user's post count
+    from models import get_user_post_count
+    post_count = get_user_post_count(session['user_id'])
+    
+    # Get user's connections count (placeholder for now)
+    connections_count = 0
+    
+    return render_template('dashboard.html', 
+                         user_skill_count=skill_count,
+                         user_post_count=post_count,
+                         user_connections_count=connections_count)
 
 if __name__ == '__main__':
     app.run(debug=True)

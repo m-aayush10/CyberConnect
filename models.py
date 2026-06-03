@@ -1,4 +1,3 @@
-cat > models.py << 'EOF'
 from db import mysql
 
 def dict_fetchall(cursor):
@@ -94,4 +93,16 @@ def delete_certification(cert_id, user_id):
     cur.execute("DELETE FROM certifications WHERE id = %s AND user_id = %s", (cert_id, user_id))
     mysql.connection.commit()
     cur.close()
-EOF
+
+def update_profile_picture(user_id, profile_image):
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE users SET profile_image = %s WHERE id = %s", (profile_image, user_id))
+    mysql.connection.commit()
+    cur.close()
+
+def get_user_post_count(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM posts WHERE user_id = %s", (user_id,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count
