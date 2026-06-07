@@ -106,3 +106,88 @@ def get_user_post_count(user_id):
     count = cur.fetchone()[0]
     cur.close()
     return count
+
+def follow_user(follower_id, followed_id):
+    if follower_id == followed_id:
+        return False
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO followers (follower_id, followed_id) VALUES (%s, %s)", 
+                    (follower_id, followed_id))
+        mysql.connection.commit()
+        cur.close()
+        return True
+    except:
+        return False
+
+def unfollow_user(follower_id, followed_id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM followers WHERE follower_id = %s AND followed_id = %s", 
+                (follower_id, followed_id))
+    mysql.connection.commit()
+    cur.close()
+    return True
+
+def get_follower_count(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM followers WHERE followed_id = %s", (user_id,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count
+
+def get_following_count(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM followers WHERE follower_id = %s", (user_id,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count
+
+def is_following(follower_id, followed_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT 1 FROM followers WHERE follower_id = %s AND followed_id = %s", 
+                (follower_id, followed_id))
+    result = cur.fetchone()
+    cur.close()
+    return result is not None
+
+def get_followers(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT users.id, users.name, users.profile_image 
+        FROM followers 
+        JOIN users ON followers.follower_id = users.id 
+        WHERE followers.followed_id = %s
+        ORDER BY followers.created_at DESC
+    """, (user_id,))
+    rows = cur.fetchall()
+    cur.close()
+    
+    followers = []
+    for row in rows:
+        followers.append({
+            'id': row[0],
+            'name': row[1],
+            'profile_image': row[2]
+        })
+    return followers
+
+def get_following(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT users.id, users.name, users.profile_image 
+        FROM followers 
+        JOIN users ON followers.followed_id = users.id 
+        WHERE followers.follower_id = %s
+        ORDER BY followers.created_at DESC
+    """, (user_id,))
+    rows = cur.fetchall()
+    cur.close()
+    
+    following = []
+    for row in rows:
+        following.append({
+            'id': row[0],
+            'name': row[1],
+            'profile_image': row[2]
+        })
+    return following

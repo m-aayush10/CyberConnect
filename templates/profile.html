@@ -21,11 +21,77 @@
         </div>
     </div>
     
+    <!-- Follow/Unfollow Button & Counts -->
+    <div class="mt-4">
+        {% if session.user_id != user.id %}
+        <div class="mb-3">
+            {% if is_following %}
+            <a href="{{ url_for('profile.unfollow', user_id=user.id) }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm inline-block">Unfollow</a>
+            {% else %}
+            <a href="{{ url_for('profile.follow', user_id=user.id) }}" class="btn-cyber px-4 py-2 rounded-lg text-sm inline-block">Follow</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="flex gap-4 text-sm">
+            <span class="text-gray-400">👥 {{ follower_count }} Followers</span>
+            <span class="text-gray-400">👤 {{ following_count }} Following</span>
+        </div>
+    </div>
+    
     {% if session.user_id == user.id %}
     <div class="mt-4 flex gap-3">
         <a href="{{ url_for('profile.edit_profile') }}" class="btn-cyber text-white px-4 py-2 rounded inline-block">Edit Profile</a>
     </div>
     {% endif %}
+    
+    <!-- Followers and Following Lists with Tabs -->
+    <div class="mt-6">
+        <div class="flex gap-6 border-b border-gray-700 pb-2 mb-4">
+            <button onclick="showTab('followers')" id="followersTabBtn" class="text-cyan-400 font-semibold border-b-2 border-cyan-400 pb-2">Followers ({{ follower_count }})</button>
+            <button onclick="showTab('following')" id="followingTabBtn" class="text-gray-400 font-semibold pb-2">Following ({{ following_count }})</button>
+        </div>
+        
+        <!-- Followers List -->
+        <div id="followersList" class="space-y-3">
+            {% for follower in followers %}
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition">
+                {% if follower.profile_image %}
+                <img src="{{ follower.profile_image }}" alt="{{ follower.name }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0071e3, #005bb5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                    {{ follower.name[0]|upper }}
+                </div>
+                {% endif %}
+                <a href="{{ url_for('profile.view_profile', user_id=follower.id) }}" style="color: white; text-decoration: none; font-weight: 500;">
+                    {{ follower.name }}
+                </a>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">No followers yet</p>
+            {% endfor %}
+        </div>
+        
+        <!-- Following List -->
+        <div id="followingList" style="display: none;" class="space-y-3">
+            {% for follow in following %}
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition">
+                {% if follow.profile_image %}
+                <img src="{{ follow.profile_image }}" alt="{{ follow.name }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0071e3, #005bb5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                    {{ follow.name[0]|upper }}
+                </div>
+                {% endif %}
+                <a href="{{ url_for('profile.view_profile', user_id=follow.id) }}" style="color: white; text-decoration: none; font-weight: 500;">
+                    {{ follow.name }}
+                </a>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Not following anyone yet</p>
+            {% endfor %}
+        </div>
+    </div>
     
     <!-- Skills Section -->
     <div class="mt-8">
@@ -99,4 +165,29 @@
         </div>
     </div>
 </div>
+
+<script>
+    function showTab(tab) {
+        const followersList = document.getElementById('followersList');
+        const followingList = document.getElementById('followingList');
+        const followersBtn = document.getElementById('followersTabBtn');
+        const followingBtn = document.getElementById('followingTabBtn');
+        
+        if (tab === 'followers') {
+            followersList.style.display = 'block';
+            followingList.style.display = 'none';
+            followersBtn.classList.add('text-cyan-400', 'border-b-2', 'border-cyan-400');
+            followersBtn.classList.remove('text-gray-400');
+            followingBtn.classList.remove('text-cyan-400', 'border-b-2', 'border-cyan-400');
+            followingBtn.classList.add('text-gray-400');
+        } else {
+            followersList.style.display = 'none';
+            followingList.style.display = 'block';
+            followingBtn.classList.add('text-cyan-400', 'border-b-2', 'border-cyan-400');
+            followingBtn.classList.remove('text-gray-400');
+            followersBtn.classList.remove('text-cyan-400', 'border-b-2', 'border-cyan-400');
+            followersBtn.classList.add('text-gray-400');
+        }
+    }
+</script>
 {% endblock %}
