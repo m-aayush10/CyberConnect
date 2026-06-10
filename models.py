@@ -1,27 +1,37 @@
+cat > models.py << 'EOF'
 from db import mysql
 
-def dict_fetchall(cursor):
-    columns = [desc[0] for desc in cursor.description]
-    return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-def dict_fetchone(cursor):
+# ========== SAFE HELPER FUNCTIONS ==========
+def safe_dict_fetchone(cursor):
     row = cursor.fetchone()
     if row is None:
         return None
     columns = [desc[0] for desc in cursor.description]
     return dict(zip(columns, row))
 
+def safe_dict_fetchall(cursor):
+    rows = cursor.fetchall()
+    if not rows:
+        return []
+    columns = [desc[0] for desc in cursor.description]
+    return [dict(zip(columns, row)) for row in rows]
+
+def safe_count(cursor):
+    result = cursor.fetchone()
+    return result[0] if result else 0
+
+# ========== USER FUNCTIONS ==========
 def get_user_by_email(email):
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-    user = dict_fetchone(cur)
+    user = safe_dict_fetchone(cur)
     cur.close()
     return user
 
 def get_user_by_id(user_id):
     cur = mysql.connection.cursor()
-    cur.execute("SELECT id, name, email, bio, profile_image FROM users WHERE id = %s", (user_id,))
-    user = dict_fetchone(cur)
+    cur.execute("SELECT id, name, email, bio, profile_image, cover_photo FROM users WHERE id = %s", (user_id,))
+    user = safe_dict_fetchone(cur)
     cur.close()
     return user
 
@@ -44,6 +54,19 @@ def update_user_profile(user_id, bio=None, profile_image=None):
     mysql.connection.commit()
     cur.close()
 
+def update_profile_picture(user_id, profile_image):
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE users SET profile_image = %s WHERE id = %s", (profile_image, user_id))
+    mysql.connection.commit()
+    cur.close()
+
+def update_cover_photo(user_id, cover_image):
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE users SET cover_photo = %s WHERE id = %s", (cover_image, user_id))
+    mysql.connection.commit()
+    cur.close()
+
+# ========== SKILLS FUNCTIONS ==========
 def add_skill(user_id, skill_name, level='Beginner'):
     try:
         cur = mysql.connection.cursor()
@@ -52,14 +75,13 @@ def add_skill(user_id, skill_name, level='Beginner'):
         mysql.connection.commit()
         cur.close()
         return True
-    except Exception as e:
-        print(e)
+    except Exception:
         return False
 
 def get_user_skills(user_id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT id, skill_name, level FROM skills WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
-    skills = dict_fetchall(cur)
+    skills = safe_dict_fetchall(cur)
     cur.close()
     return skills
 
@@ -69,6 +91,7 @@ def delete_skill(skill_id, user_id):
     mysql.connection.commit()
     cur.close()
 
+# ========== CERTIFICATIONS FUNCTIONS ==========
 def add_certification(user_id, title, issuer, date_earned=None, credential_url=None):
     try:
         cur = mysql.connection.cursor()
@@ -77,14 +100,13 @@ def add_certification(user_id, title, issuer, date_earned=None, credential_url=N
         mysql.connection.commit()
         cur.close()
         return True
-    except Exception as e:
-        print(e)
+    except Exception:
         return False
 
 def get_user_certifications(user_id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT id, title, issuer, date_earned, credential_url FROM certifications WHERE user_id = %s ORDER BY date_earned DESC", (user_id,))
-    certs = dict_fetchall(cur)
+    certs = safe_dict_fetchall(cur)
     cur.close()
     return certs
 
@@ -94,19 +116,28 @@ def delete_certification(cert_id, user_id):
     mysql.connection.commit()
     cur.close()
 
-def update_profile_picture(user_id, profile_image):
-    cur = mysql.connection.cursor()
-    cur.execute("UPDATE users SET profile_image = %s WHERE id = %s", (profile_image, user_id))
-    mysql.connection.commit()
-    cur.close()
-
+# ========== POSTS FUNCTIONS ==========
 def get_user_post_count(user_id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT COUNT(*) FROM posts WHERE user_id = %s", (user_id,))
-    count = cur.fetchone()[0]
+    count = safe_count(cur)
     cur.close()
     return count
 
+def get_user_posts(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT posts.*, users.name 
+        FROM posts 
+        JOIN users ON posts.user_id = users.id 
+        WHERE posts.user_id = %s
+        ORDER BY posts.created_at DESC
+    """, (user_id,))
+    posts = safe_dict_fetchall(cur)
+    cur.close()
+    return posts
+
+# ========== FOLLOWERS/CONNECTIONS FUNCTIONS ==========
 def follow_user(follower_id, followed_id):
     if follower_id == followed_id:
         return False
@@ -131,14 +162,14 @@ def unfollow_user(follower_id, followed_id):
 def get_follower_count(user_id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT COUNT(*) FROM followers WHERE followed_id = %s", (user_id,))
-    count = cur.fetchone()[0]
+    count = safe_count(cur)
     cur.close()
     return count
 
 def get_following_count(user_id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT COUNT(*) FROM followers WHERE follower_id = %s", (user_id,))
-    count = cur.fetchone()[0]
+    count = safe_count(cur)
     cur.close()
     return count
 
@@ -159,16 +190,8 @@ def get_followers(user_id):
         WHERE followers.followed_id = %s
         ORDER BY followers.created_at DESC
     """, (user_id,))
-    rows = cur.fetchall()
+    followers = safe_dict_fetchall(cur)
     cur.close()
-    
-    followers = []
-    for row in rows:
-        followers.append({
-            'id': row[0],
-            'name': row[1],
-            'profile_image': row[2]
-        })
     return followers
 
 def get_following(user_id):
@@ -180,14 +203,7 @@ def get_following(user_id):
         WHERE followers.follower_id = %s
         ORDER BY followers.created_at DESC
     """, (user_id,))
-    rows = cur.fetchall()
+    following = safe_dict_fetchall(cur)
     cur.close()
-    
-    following = []
-    for row in rows:
-        following.append({
-            'id': row[0],
-            'name': row[1],
-            'profile_image': row[2]
-        })
     return following
+EOF
