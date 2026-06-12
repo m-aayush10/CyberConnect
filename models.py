@@ -206,3 +206,33 @@ def get_following(user_id):
     cur.close()
     return following
  
+def add_like(user_id, post_id):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO likes (user_id, post_id) VALUES (%s, %s)", (user_id, post_id))
+        mysql.connection.commit()
+        cur.close()
+        return True
+    except:
+        return False
+
+def remove_like(user_id, post_id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
+    mysql.connection.commit()
+    cur.close()
+    return True
+
+def get_like_count(post_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM likes WHERE post_id = %s", (post_id,))
+    result = cur.fetchone()
+    cur.close()
+    return result[0] if result else 0
+
+def user_has_liked(user_id, post_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT 1 FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
+    result = cur.fetchone()
+    cur.close()
+    return result is not None
