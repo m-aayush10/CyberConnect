@@ -1,4 +1,3 @@
-cat > models.py << 'EOF'
 from db import mysql
 
 # ========== SAFE HELPER FUNCTIONS ==========
@@ -206,4 +205,4 @@ def get_following(user_id):
     following = safe_dict_fetchall(cur)
     cur.close()
     return following
-EOF
+ 

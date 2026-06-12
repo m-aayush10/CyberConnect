@@ -26,6 +26,7 @@ def view_profile(user_id):
     from models import get_user_skills
     skills = get_user_skills(user_id)
     user['skills'] = skills
+    
     # Fetch certifications for this user
     from models import get_user_certifications
     certs = get_user_certifications(user_id)
@@ -42,12 +43,22 @@ def view_profile(user_id):
     followers_list = get_followers(user_id)
     following_list = get_following(user_id)
     
+    # Fetch cover photo
+    cover_photo = user.get('cover_photo')
+    
+    # Fetch user's posts
+    from models import get_user_posts
+    user_posts = get_user_posts(user_id)
+    
     return render_template('profile.html', user=user, 
                            follower_count=follower_count,
                            following_count=following_count,
                            is_following=following_status,
                            followers=followers_list,
-                           following=following_list)
+                           following=following_list,
+                           cover_photo=cover_photo,
+                           user_posts=user_posts,
+                           posts_count=len(user_posts))
 
 @profile_bp.route('/edit', methods=['GET', 'POST'])
 def edit_profile():
@@ -126,20 +137,47 @@ def upload_picture():
     
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        # Create unique filename with user_id and timestamp
         name, ext = os.path.splitext(filename)
         filename = f"user_{session['user_id']}_{int(time.time())}{ext}"
         filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
         
-        # Update database with the image path
         from models import update_profile_picture
         update_profile_picture(session['user_id'], f'/{UPLOAD_FOLDER}/{filename}')
         
-        # Update session
         session['user_profile_image'] = f'/{UPLOAD_FOLDER}/{filename}'
         
         flash('Profile picture updated!', 'success')
+    else:
+        flash('Invalid file type. Use PNG, JPG, JPEG, GIF, or WEBP', 'danger')
+    
+    return redirect(url_for('profile.edit_profile'))
+
+@profile_bp.route('/upload_cover', methods=['POST'])
+def upload_cover():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    if 'cover_photo' not in request.files:
+        flash('No file selected', 'danger')
+        return redirect(url_for('profile.edit_profile'))
+    
+    file = request.files['cover_photo']
+    if file.filename == '':
+        flash('No file selected', 'danger')
+        return redirect(url_for('profile.edit_profile'))
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        name, ext = os.path.splitext(filename)
+        filename = f"cover_{session['user_id']}_{int(time.time())}{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        
+        from models import update_cover_photo
+        update_cover_photo(session['user_id'], f'/{UPLOAD_FOLDER}/{filename}')
+        
+        flash('Cover photo updated!', 'success')
     else:
         flash('Invalid file type. Use PNG, JPG, JPEG, GIF, or WEBP', 'danger')
     

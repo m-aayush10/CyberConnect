@@ -1,23 +1,31 @@
 {% extends "base.html" %}
+
 {% block title %}Register{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto glass-card rounded-2xl p-8">
-    <h2 class="text-4xl font-bold mb-6 text-center" style="color: #00ffff; text-shadow: 0 0 10px rgba(0,255,255,0.5);">Join CyberConnect</h2>
-    <form method="POST">
-        <div class="mb-4">
-            <label style="color: #00d4ff !important; font-weight: bold;">Full Name</label>
-            <input type="text" name="name" required style="width: 100%; padding: 10px; border-radius: 8px; background-color: #1e293b; color: white; border: 1px solid #00d4ff;">
-        </div>
-        <div class="mb-4">
-            <label style="color: #00d4ff !important; font-weight: bold;">Email</label>
-            <input type="email" name="email" required style="width: 100%; padding: 10px; border-radius: 8px; background-color: #1e293b; color: white; border: 1px solid #00d4ff;">
-        </div>
-        <div class="mb-4">
-            <label style="color: #00d4ff !important; font-weight: bold;">Password</label>
-            <input type="password" name="password" required style="width: 100%; padding: 10px; border-radius: 8px; background-color: #1e293b; color: white; border: 1px solid #00d4ff;">
-        </div>
-        <button type="submit" class="btn-cyber w-full text-white py-2 rounded transition" style="padding: 12px; font-weight: bold;">Register</button>
-    </form>
-    <p class="mt-4 text-center" style="color: #cbd5e1;">Already have an account? <a href="{{ url_for('auth.login') }}" style="color: #00d4ff;">Login</a></p>
+<div class="max-w-md mx-auto">
+    <div class="glass-card">
+        <h2 class="text-3xl font-bold mb-6 text-center cyber-text">Join CyberConnect</h2>
+        
+        <form method="POST">
+            <div class="mb-4">
+                <label>Full Name</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="mb-4">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="mb-4">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+            <button type="submit" class="btn-cyber w-full">Register</button>
+        </form>
+        
+        <p class="mt-4 text-center text-gray-400">
+            Already have an account? <a href="{{ url_for('auth.login') }}">Login</a>
+        </p>
+    </div>
 </div>
 {% endblock %}

@@ -4,86 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberConnect - {% block title %}{% endblock %}</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            background: linear-gradient(135deg, #0a0f1e 0%, #0d1525 100%);
-            font-family: 'Segoe UI', 'Courier New', monospace;
-            color: #ffffff;
-        }
-        .glass-card {
-            background: rgba(15, 25, 45, 0.85);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        .cyber-text {
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            color: #00ffff;
-            font-weight: bold;
-        }
-        .btn-cyber {
-            background: linear-gradient(135deg, #00d4ff, #0066ff);
-            transition: all 0.3s ease;
-            color: white;
-            font-weight: bold;
-        }
-        .btn-cyber:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-        }
-        .nav-link:hover {
-            text-shadow: 0 0 8px #00d4ff;
-        }
-        
-        /* Form input styling */
-        input, select, textarea {
-            background-color: #1e293b !important;
-            color: #ffffff !important;
-            border: 1px solid #00d4ff !important;
-            border-radius: 8px !important;
-            padding: 10px !important;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none !important;
-            border-color: #00ffff !important;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3) !important;
-        }
-        
-        /* Label styling - MAKE THIS BRIGHT */
-        label {
-            color: #00d4ff !important;
-            font-weight: bold !important;
-            margin-bottom: 8px !important;
-            display: block !important;
-            font-size: 14px !important;
-        }
-        
-        /* Headings */
-        h1, h2, h3, h4, h5, h6 {
-            color: #00ffff !important;
-        }
-        
-        /* Paragraphs and text */
-        p, span, div, .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700 {
-            color: #cbd5e1 !important;
-        }
-        
-        /* Links */
-        a {
-            color: #00d4ff !important;
-        }
-        a:hover {
-            color: #00ffff !important;
-            text-decoration: underline !important;
-        }
-        
-        /* Placeholder text */
-        ::placeholder {
-            color: #94a3b8 !important;
-            opacity: 1 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
 </head>
 <body class="text-gray-200">
     <nav class="glass-card border-b border-cyan-500/30">
