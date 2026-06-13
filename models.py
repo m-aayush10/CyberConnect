@@ -236,3 +236,47 @@ def user_has_liked(user_id, post_id):
     result = cur.fetchone()
     cur.close()
     return result is not None
+
+
+def add_comment(user_id, post_id, content):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO comments (user_id, post_id, content) VALUES (%s, %s, %s)", 
+                    (user_id, post_id, content))
+        mysql.connection.commit()
+        cur.close()
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
+def get_comments_by_post(post_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT comments.*, users.name, users.profile_image 
+        FROM comments 
+        JOIN users ON comments.user_id = users.id 
+        WHERE comments.post_id = %s 
+        ORDER BY comments.created_at ASC
+    """, (post_id,))
+    rows = cur.fetchall()
+    cur.close()
+    
+    comments = []
+    for row in rows:
+        comments.append({
+            'id': row[0],
+            'user_id': row[1],
+            'post_id': row[2],
+            'content': row[3],
+            'created_at': row[4],
+            'name': row[5],
+            'profile_image': row[6]
+        })
+    return comments
+
+def delete_comment(comment_id, user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM comments WHERE id = %s AND user_id = %s", (comment_id, user_id))
+    mysql.connection.commit()
+    cur.close()
