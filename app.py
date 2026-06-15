@@ -15,6 +15,7 @@ app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
 mysql.init_app(app)
 
+from models import get_follower_count
 from routes.auth import auth_bp
 from routes.profile import profile_bp
 from routes.posts import posts_bp
@@ -46,7 +47,8 @@ def dashboard():
     post_count = get_user_post_count(session['user_id'])
     
     # Get user's connections count (placeholder for now)
-    connections_count = 0
+    from models import get_follower_count
+    connections_count = get_follower_count(session['user_id'])
     
     return render_template('dashboard.html', 
                          user_skill_count=skill_count,
