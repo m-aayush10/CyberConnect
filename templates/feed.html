@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <!-- Create Post Card (Facebook Style) -->
+    <!-- Create Post Card -->
     <div class="glass-card rounded-2xl p-4 mb-6">
         <div class="flex gap-3">
             {% if session.user_profile_image %}
@@ -32,13 +32,12 @@
         </div>
     </div>
 
-    <!-- Display Posts (Facebook Style) -->
+    <!-- Display Posts -->
     {% for post in posts %}
-    <div class="glass-card rounded-2xl p-4 mb-4">
+    <div class="glass-card rounded-2xl p-4 mb-4" id="post-{{ post.id }}">
         <!-- Post Header -->
         <div class="flex justify-between items-start">
             <div class="flex gap-3">
-                <!-- Avatar clickable -->
                 <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}">
                     {% if post.profile_image %}
                     <img src="{{ post.profile_image }}" class="w-10 h-10 rounded-full object-cover">
@@ -49,7 +48,6 @@
                     {% endif %}
                 </a>
                 <div>
-                    <!-- Username clickable -->
                     <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}" class="font-semibold text-white hover:text-cyan-400">
                         {{ post.name }}
                     </a>
@@ -57,15 +55,13 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <!-- Follow/Unfollow Button for other users' posts -->
                 {% if session.user_id != post.user_id %}
                     {% if user_following_status and user_following_status.get(post.user_id) %}
-                    <a href="{{ url_for('profile.unfollow', user_id=post.user_id) }}" class="bg-gray-700 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full transition">Unfollow</a>
+                    <button onclick="toggleFollow({{ post.user_id }}, this)" class="bg-gray-700 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full transition" data-following="true">Following</button>
                     {% else %}
-                    <a href="{{ url_for('profile.follow', user_id=post.user_id) }}" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition">Follow</a>
+                    <button onclick="toggleFollow({{ post.user_id }}, this)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition" data-following="false">Follow</button>
                     {% endif %}
                 {% endif %}
-                <!-- Edit/Delete menu for own posts -->
                 {% if session.user_id == post.user_id %}
                 <div class="relative">
                     <button onclick="togglePostMenu({{ post.id }})" class="text-gray-400 hover:text-white">⋯</button>
@@ -86,30 +82,34 @@
         
         <!-- Like/Comment Count Row -->
         <div class="flex justify-between items-center mt-3 pt-2 text-xs text-gray-500">
-            <div>{{ like_counts.get(post.id, 0) }} likes</div>
-            <div>{{ post_comments.get(post.id, [])|length }} comments</div>
+            <div id="like-count-{{ post.id }}">{{ like_counts.get(post.id, 0) }} likes</div>
+            <div>
+                <button onclick="toggleCommentBox({{ post.id }})" class="text-gray-500 hover:text-cyan-400 transition">
+                    {{ post_comments.get(post.id, [])|length }} comments
+                </button>
+            </div>
         </div>
         
-        <!-- Action Buttons (Facebook Style) -->
+        <!-- Action Buttons -->
         <div class="flex justify-around mt-2 pt-2 border-t border-gray-700">
             {% if user_has_liked and user_has_liked[post.id] %}
-            <a href="{{ url_for('posts.unlike_post', post_id=post.id) }}" class="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-semibold">
-                <span>❤️</span> Like
-            </a>
+            <button onclick="toggleLike({{ post.id }}, this)" class="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-semibold" data-liked="true">
+                ❤️ Like
+            </button>
             {% else %}
-            <a href="{{ url_for('posts.like_post', post_id=post.id) }}" class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
-                <span>👍</span> Like
-            </a>
+            <button onclick="toggleLike({{ post.id }}, this)" class="flex items-center gap-2 text-gray-400 hover:text-red-500 text-sm font-semibold" data-liked="false">
+                👍 Like
+            </button>
             {% endif %}
             <button onclick="toggleCommentBox({{ post.id }})" class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
-                <span>💬</span> Comment
+                💬 Comment
             </button>
             <button class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
-                <span>↗️</span> Share
+                ↗️ Share
             </button>
         </div>
         
-        <!-- Comments Section (Collapsible) -->
+        <!-- Comments Section -->
         <div id="commentBox{{ post.id }}" class="hidden mt-3 pt-2 border-t border-gray-700">
             <form method="POST" action="{{ url_for('posts.add_comment', post_id=post.id) }}" class="flex gap-2">
                 <input type="text" name="content" placeholder="Write a comment..." class="flex-1 bg-gray-800/50 border border-gray-700 rounded-full px-3 py-1 text-sm text-white" required>
@@ -121,7 +121,6 @@
                 <div class="flex justify-between items-start gap-2">
                     <div class="flex-1 bg-gray-800/40 rounded-lg p-2">
                         <div class="flex items-center gap-2">
-                            <!-- Comment author clickable -->
                             <a href="{{ url_for('profile.view_profile', user_id=comment.user_id) }}" class="font-semibold text-cyan-400 text-sm hover:underline">
                                 {{ comment.name }}
                             </a>
@@ -145,6 +144,79 @@
 </div>
 
 <script>
+    // Toggle Follow/Unfollow with AJAX
+    function toggleFollow(userId, button) {
+        const isFollowing = button.getAttribute('data-following') === 'true';
+        const url = isFollowing ? `/profile/unfollow/${userId}` : `/profile/follow/${userId}`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.action === 'followed') {
+                    button.setAttribute('data-following', 'true');
+                    button.textContent = 'Following';
+                    button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    button.classList.add('bg-gray-700', 'hover:bg-red-600');
+                } else {
+                    button.setAttribute('data-following', 'false');
+                    button.textContent = 'Follow';
+                    button.classList.remove('bg-gray-700', 'hover:bg-red-600');
+                    button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+            } else {
+                alert(data.error || 'Something went wrong');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update follow status');
+        });
+    }
+
+    // Toggle Like/Unlike with AJAX
+    function toggleLike(postId, button) {
+        const isLiked = button.getAttribute('data-liked') === 'true';
+        const url = isLiked ? `/posts/unlike/${postId}` : `/posts/like/${postId}`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const likeCountElement = document.getElementById(`like-count-${postId}`);
+                if (data.action === 'liked') {
+                    button.setAttribute('data-liked', 'true');
+                    button.innerHTML = '❤️ Like';
+                    button.classList.remove('text-gray-400', 'hover:text-red-500');
+                    button.classList.add('text-red-500', 'hover:text-red-400');
+                    likeCountElement.textContent = data.like_count + ' likes';
+                } else {
+                    button.setAttribute('data-liked', 'false');
+                    button.innerHTML = '👍 Like';
+                    button.classList.remove('text-red-500', 'hover:text-red-400');
+                    button.classList.add('text-gray-400', 'hover:text-red-500');
+                    likeCountElement.textContent = data.like_count + ' likes';
+                }
+            } else {
+                alert(data.error || 'Something went wrong');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update like status');
+        });
+    }
+
     function togglePostMenu(postId) {
         const menu = document.getElementById('postMenu' + postId);
         if (menu) {
@@ -159,7 +231,6 @@
         }
     }
     
-    // Close menu when clicking elsewhere
     document.addEventListener('click', function(event) {
         if (!event.target.closest('[onclick*="togglePostMenu"]')) {
             document.querySelectorAll('[id^="postMenu"]').forEach(menu => {
