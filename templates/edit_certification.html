@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Certification{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="glass-card rounded-2xl p-6">
+        <h2 class="text-2xl font-bold mb-6 cyber-text">Edit Certification</h2>
+        
+        <form method="POST">
+            <div class="mb-4">
+                <label class="block text-cyan-400 font-bold mb-2">Certification Title</label>
+                <input type="text" name="title" value="{{ cert.title }}" required class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+            </div>
+            <div class="mb-4">
+                <label class="block text-cyan-400 font-bold mb-2">Issuer</label>
+                <input type="text" name="issuer" value="{{ cert.issuer }}" required class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+            </div>
+            <div class="mb-4">
+                <label class="block text-cyan-400 font-bold mb-2">Date Earned</label>
+                <input type="date" name="date_earned" value="{{ cert.date_earned }}" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+            </div>
+            <div class="mb-4">
+                <label class="block text-cyan-400 font-bold mb-2">Credential URL (optional)</label>
+                <input type="url" name="credential_url" value="{{ cert.credential_url or '' }}" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="btn-cyber px-6 py-2 rounded">Save Changes</button>
+                <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded transition">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -98,30 +98,34 @@
         <h3 class="text-xl font-bold mb-3 text-cyan-400">🛡️ Cybersecurity Skills</h3>
         
         {% if session.user_id == user.id %}
-        <form method="POST" action="{{ url_for('profile.add_skill') }}" class="mb-4 flex gap-2">
-            <input type="text" name="skill_name" placeholder="e.g., Penetration Testing" required class="flex-1 p-2 rounded bg-gray-800 border border-cyan-500/30 text-white">
-            <select name="level" class="p-2 rounded bg-gray-800 border border-cyan-500/30 text-white">
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-                <option value="Expert">Expert</option>
-            </select>
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition">+ Add</button>
+        <form method="POST" action="{{ url_for('profile.add_skill') }}" class="mb-4" onsubmit="return validateSkillForm(event)">
+            <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" name="skill_name" id="skill_name" placeholder="Enter skill (e.g., Python, Networking, Penetration Testing)" class="flex-1 p-3 rounded bg-gray-800 border border-cyan-500/30 text-white text-base" style="min-width: 200px;">
+                <select name="level" class="p-3 rounded bg-gray-800 border border-cyan-500/30 text-white">
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                </select>
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded transition whitespace-nowrap">Add Skill</button>
+            </div>
         </form>
         {% endif %}
         
+        {% if user.skills and user.skills|length > 0 %}
         <div class="flex flex-wrap gap-2">
             {% for skill in user.skills %}
             <div class="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full flex items-center gap-2 border border-cyan-500/30">
-                {{ skill.skill_name }} ({{ skill.level }})
+                <span>{{ skill.skill_name }} ({{ skill.level }})</span>
                 {% if session.user_id == user.id %}
-                <a href="{{ url_for('profile.delete_skill', skill_id=skill.id) }}" class="text-red-400 hover:text-red-600" onclick="return confirm('Remove this skill?')">×</a>
+                <a href="{{ url_for('profile.delete_skill', skill_id=skill.id) }}" class="text-red-400 hover:text-red-600 text-lg leading-none" onclick="return confirm('Remove this skill?')">&times;</a>
                 {% endif %}
             </div>
-            {% else %}
-            <p class="text-gray-500">No skills added yet.</p>
             {% endfor %}
         </div>
+        {% else %}
+        <p class="text-gray-500">No skills added yet. Add your first skill above!</p>
+        {% endif %}
     </div>
     
     <!-- Certifications Section -->
@@ -155,7 +159,10 @@
                         {% endif %}
                     </div>
                     {% if session.user_id == user.id %}
-                    <a href="{{ url_for('profile.delete_certification', cert_id=cert.id) }}" class="text-red-500 hover:text-red-700" onclick="return confirm('Remove this certification?')">🗑️</a>
+                    <div class="flex gap-2">
+                        <a href="{{ url_for('profile.edit_certification', cert_id=cert.id) }}" class="text-yellow-400 hover:text-yellow-300 text-sm">✏️ Edit</a>
+                        <a href="{{ url_for('profile.delete_certification', cert_id=cert.id) }}" class="text-red-500 hover:text-red-700 text-sm" onclick="return confirm('Remove this certification?')">🗑️</a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -188,6 +195,16 @@
             followersBtn.classList.remove('text-cyan-400', 'border-b-2', 'border-cyan-400');
             followersBtn.classList.add('text-gray-400');
         }
+    }
+    
+    function validateSkillForm(event) {
+        var skillName = document.getElementById('skill_name').value.trim();
+        if (skillName === '') {
+            event.preventDefault();
+            alert('Please enter a skill name');
+            return false;
+        }
+        return true;
     }
 </script>
 {% endblock %}

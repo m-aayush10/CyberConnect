@@ -280,3 +280,30 @@ def delete_comment(comment_id, user_id):
     cur.execute("DELETE FROM comments WHERE id = %s AND user_id = %s", (comment_id, user_id))
     mysql.connection.commit()
     cur.close()
+
+def get_certification_by_id(cert_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM certifications WHERE id = %s", (cert_id,))
+    row = cur.fetchone()
+    cur.close()
+    
+    if row:
+        return {
+            'id': row[0],
+            'user_id': row[1],
+            'title': row[2],
+            'issuer': row[3],
+            'date_earned': row[4],
+            'credential_url': row[5]
+        }
+    return None
+
+def update_certification(cert_id, title, issuer, date_earned=None, credential_url=None):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE certifications 
+        SET title = %s, issuer = %s, date_earned = %s, credential_url = %s 
+        WHERE id = %s
+    """, (title, issuer, date_earned, credential_url, cert_id))
+    mysql.connection.commit()
+    cur.close()
