@@ -1,19 +1,19 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import dotenv
-from db import mysql
+from db import get_db
 
 dotenv.load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
-app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
+# app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
+# app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
+# app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
+# app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
 
-mysql.init_app(app)
+# mysql.init_app(app)
 
 from models import get_follower_count
 from routes.auth import auth_bp

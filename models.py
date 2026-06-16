@@ -1,309 +1,319 @@
-from db import mysql
+from db import get_db
 
-# ========== SAFE HELPER FUNCTIONS ==========
-def safe_dict_fetchone(cursor):
-    row = cursor.fetchone()
+# ========== HELPER FUNCTIONS ==========
+
+def dict_fetchone(row):
+    """Convert a SQLite row to a dictionary"""
     if row is None:
         return None
-    columns = [desc[0] for desc in cursor.description]
-    return dict(zip(columns, row))
+    return dict(row)
 
-def safe_dict_fetchall(cursor):
-    rows = cursor.fetchall()
-    if not rows:
-        return []
-    columns = [desc[0] for desc in cursor.description]
-    return [dict(zip(columns, row)) for row in rows]
-
-def safe_count(cursor):
-    result = cursor.fetchone()
-    return result[0] if result else 0
+def dict_fetchall(rows):
+    """Convert SQLite rows to a list of dictionaries"""
+    return [dict(row) for row in rows]
 
 # ========== USER FUNCTIONS ==========
+
 def get_user_by_email(email):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-    user = safe_dict_fetchone(cur)
-    cur.close()
-    return user
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    db.close()
+    return dict_fetchone(user)
 
 def get_user_by_id(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT id, name, email, bio, profile_image, cover_photo FROM users WHERE id = %s", (user_id,))
-    user = safe_dict_fetchone(cur)
-    cur.close()
-    return user
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT id, name, email, bio, profile_image, cover_photo FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    db.close()
+    return dict_fetchone(user)
 
 def create_user(name, email, hashed_password):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)", (name, email, hashed_password))
-        mysql.connection.commit()
-        cur.close()
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, hashed_password))
+        db.commit()
+        db.close()
         return True
     except Exception:
         return False
 
 def update_user_profile(user_id, bio=None, profile_image=None):
-    cur = mysql.connection.cursor()
+    db = get_db()
+    cursor = db.cursor()
     if bio:
-        cur.execute("UPDATE users SET bio = %s WHERE id = %s", (bio, user_id))
+        cursor.execute("UPDATE users SET bio = ? WHERE id = ?", (bio, user_id))
     if profile_image:
-        cur.execute("UPDATE users SET profile_image = %s WHERE id = %s", (profile_image, user_id))
-    mysql.connection.commit()
-    cur.close()
+        cursor.execute("UPDATE users SET profile_image = ? WHERE id = ?", (profile_image, user_id))
+    db.commit()
+    db.close()
 
 def update_profile_picture(user_id, profile_image):
-    cur = mysql.connection.cursor()
-    cur.execute("UPDATE users SET profile_image = %s WHERE id = %s", (profile_image, user_id))
-    mysql.connection.commit()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE users SET profile_image = ? WHERE id = ?", (profile_image, user_id))
+    db.commit()
+    db.close()
 
 def update_cover_photo(user_id, cover_image):
-    cur = mysql.connection.cursor()
-    cur.execute("UPDATE users SET cover_photo = %s WHERE id = %s", (cover_image, user_id))
-    mysql.connection.commit()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE users SET cover_photo = ? WHERE id = ?", (cover_image, user_id))
+    db.commit()
+    db.close()
 
 # ========== SKILLS FUNCTIONS ==========
+
 def add_skill(user_id, skill_name, level='Beginner'):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO skills (user_id, skill_name, level) VALUES (%s, %s, %s)",
-                    (user_id, skill_name, level))
-        mysql.connection.commit()
-        cur.close()
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO skills (user_id, skill_name, level) VALUES (?, ?, ?)",
+                       (user_id, skill_name, level))
+        db.commit()
+        db.close()
         return True
     except Exception:
         return False
 
 def get_user_skills(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT id, skill_name, level FROM skills WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
-    skills = safe_dict_fetchall(cur)
-    cur.close()
-    return skills
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT id, skill_name, level FROM skills WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
+    skills = cursor.fetchall()
+    db.close()
+    return dict_fetchall(skills)
 
 def delete_skill(skill_id, user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM skills WHERE id = %s AND user_id = %s", (skill_id, user_id))
-    mysql.connection.commit()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM skills WHERE id = ? AND user_id = ?", (skill_id, user_id))
+    db.commit()
+    db.close()
 
 # ========== CERTIFICATIONS FUNCTIONS ==========
+
 def add_certification(user_id, title, issuer, date_earned=None, credential_url=None):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO certifications (user_id, title, issuer, date_earned, credential_url) VALUES (%s, %s, %s, %s, %s)",
-                    (user_id, title, issuer, date_earned, credential_url))
-        mysql.connection.commit()
-        cur.close()
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO certifications (user_id, title, issuer, date_earned, credential_url) 
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_id, title, issuer, date_earned, credential_url))
+        db.commit()
+        db.close()
         return True
     except Exception:
         return False
 
 def get_user_certifications(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT id, title, issuer, date_earned, credential_url FROM certifications WHERE user_id = %s ORDER BY date_earned DESC", (user_id,))
-    certs = safe_dict_fetchall(cur)
-    cur.close()
-    return certs
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT id, title, issuer, date_earned, credential_url FROM certifications WHERE user_id = ? ORDER BY date_earned DESC", (user_id,))
+    certs = cursor.fetchall()
+    db.close()
+    return dict_fetchall(certs)
 
 def delete_certification(cert_id, user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM certifications WHERE id = %s AND user_id = %s", (cert_id, user_id))
-    mysql.connection.commit()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM certifications WHERE id = ? AND user_id = ?", (cert_id, user_id))
+    db.commit()
+    db.close()
+
+def get_certification_by_id(cert_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM certifications WHERE id = ?", (cert_id,))
+    cert = cursor.fetchone()
+    db.close()
+    return dict_fetchone(cert)
+
+def update_certification(cert_id, title, issuer, date_earned=None, credential_url=None):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
+        UPDATE certifications 
+        SET title = ?, issuer = ?, date_earned = ?, credential_url = ? 
+        WHERE id = ?
+    """, (title, issuer, date_earned, credential_url, cert_id))
+    db.commit()
+    db.close()
 
 # ========== POSTS FUNCTIONS ==========
+
 def get_user_post_count(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT COUNT(*) FROM posts WHERE user_id = %s", (user_id,))
-    count = safe_count(cur)
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM posts WHERE user_id = ?", (user_id,))
+    count = cursor.fetchone()[0]
+    db.close()
     return count
 
 def get_user_posts(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
         SELECT posts.*, users.name 
         FROM posts 
         JOIN users ON posts.user_id = users.id 
-        WHERE posts.user_id = %s
+        WHERE posts.user_id = ?
         ORDER BY posts.created_at DESC
     """, (user_id,))
-    posts = safe_dict_fetchall(cur)
-    cur.close()
-    return posts
+    posts = cursor.fetchall()
+    db.close()
+    return dict_fetchall(posts)
 
-# ========== FOLLOWERS/CONNECTIONS FUNCTIONS ==========
-def follow_user(follower_id, followed_id):
-    if follower_id == followed_id:
-        return False
-    try:
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO followers (follower_id, followed_id) VALUES (%s, %s)", 
-                    (follower_id, followed_id))
-        mysql.connection.commit()
-        cur.close()
-        return True
-    except:
-        return False
+# ========== LIKES FUNCTIONS ==========
 
-def unfollow_user(follower_id, followed_id):
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM followers WHERE follower_id = %s AND followed_id = %s", 
-                (follower_id, followed_id))
-    mysql.connection.commit()
-    cur.close()
-    return True
-
-def get_follower_count(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT COUNT(*) FROM followers WHERE followed_id = %s", (user_id,))
-    count = safe_count(cur)
-    cur.close()
-    return count
-
-def get_following_count(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT COUNT(*) FROM followers WHERE follower_id = %s", (user_id,))
-    count = safe_count(cur)
-    cur.close()
-    return count
-
-def is_following(follower_id, followed_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT 1 FROM followers WHERE follower_id = %s AND followed_id = %s", 
-                (follower_id, followed_id))
-    result = cur.fetchone()
-    cur.close()
-    return result is not None
-
-def get_followers(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT users.id, users.name, users.profile_image 
-        FROM followers 
-        JOIN users ON followers.follower_id = users.id 
-        WHERE followers.followed_id = %s
-        ORDER BY followers.created_at DESC
-    """, (user_id,))
-    followers = safe_dict_fetchall(cur)
-    cur.close()
-    return followers
-
-def get_following(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT users.id, users.name, users.profile_image 
-        FROM followers 
-        JOIN users ON followers.followed_id = users.id 
-        WHERE followers.follower_id = %s
-        ORDER BY followers.created_at DESC
-    """, (user_id,))
-    following = safe_dict_fetchall(cur)
-    cur.close()
-    return following
- 
 def add_like(user_id, post_id):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO likes (user_id, post_id) VALUES (%s, %s)", (user_id, post_id))
-        mysql.connection.commit()
-        cur.close()
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO likes (user_id, post_id) VALUES (?, ?)", (user_id, post_id))
+        db.commit()
+        db.close()
         return True
     except:
         return False
 
 def remove_like(user_id, post_id):
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
-    mysql.connection.commit()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM likes WHERE user_id = ? AND post_id = ?", (user_id, post_id))
+    db.commit()
+    db.close()
     return True
 
 def get_like_count(post_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT COUNT(*) FROM likes WHERE post_id = %s", (post_id,))
-    result = cur.fetchone()
-    cur.close()
-    return result[0] if result else 0
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM likes WHERE post_id = ?", (post_id,))
+    count = cursor.fetchone()[0]
+    db.close()
+    return count
 
 def user_has_liked(user_id, post_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT 1 FROM likes WHERE user_id = %s AND post_id = %s", (user_id, post_id))
-    result = cur.fetchone()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT 1 FROM likes WHERE user_id = ? AND post_id = ?", (user_id, post_id))
+    result = cursor.fetchone()
+    db.close()
     return result is not None
 
+# ========== COMMENTS FUNCTIONS ==========
 
 def add_comment(user_id, post_id, content):
     try:
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO comments (user_id, post_id, content) VALUES (%s, %s, %s)", 
-                    (user_id, post_id, content))
-        mysql.connection.commit()
-        cur.close()
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO comments (user_id, post_id, content) VALUES (?, ?, ?)", 
+                       (user_id, post_id, content))
+        db.commit()
+        db.close()
         return True
-    except Exception as e:
-        print(e)
+    except Exception:
         return False
 
 def get_comments_by_post(post_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
         SELECT comments.*, users.name, users.profile_image 
         FROM comments 
         JOIN users ON comments.user_id = users.id 
-        WHERE comments.post_id = %s 
+        WHERE comments.post_id = ? 
         ORDER BY comments.created_at ASC
     """, (post_id,))
-    rows = cur.fetchall()
-    cur.close()
-    
-    comments = []
-    for row in rows:
-        comments.append({
-            'id': row[0],
-            'user_id': row[1],
-            'post_id': row[2],
-            'content': row[3],
-            'created_at': row[4],
-            'name': row[5],
-            'profile_image': row[6]
-        })
-    return comments
+    comments = cursor.fetchall()
+    db.close()
+    return dict_fetchall(comments)
 
 def delete_comment(comment_id, user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("DELETE FROM comments WHERE id = %s AND user_id = %s", (comment_id, user_id))
-    mysql.connection.commit()
-    cur.close()
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM comments WHERE id = ? AND user_id = ?", (comment_id, user_id))
+    db.commit()
+    db.close()
 
-def get_certification_by_id(cert_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM certifications WHERE id = %s", (cert_id,))
-    row = cur.fetchone()
-    cur.close()
-    
-    if row:
-        return {
-            'id': row[0],
-            'user_id': row[1],
-            'title': row[2],
-            'issuer': row[3],
-            'date_earned': row[4],
-            'credential_url': row[5]
-        }
-    return None
+# ========== FOLLOWERS/CONNECTIONS FUNCTIONS ==========
 
-def update_certification(cert_id, title, issuer, date_earned=None, credential_url=None):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        UPDATE certifications 
-        SET title = %s, issuer = %s, date_earned = %s, credential_url = %s 
-        WHERE id = %s
-    """, (title, issuer, date_earned, credential_url, cert_id))
-    mysql.connection.commit()
-    cur.close()
+def follow_user(follower_id, followed_id):
+    if follower_id == followed_id:
+        return False
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO followers (follower_id, followed_id) VALUES (?, ?)", 
+                       (follower_id, followed_id))
+        db.commit()
+        db.close()
+        return True
+    except:
+        return False
+
+def unfollow_user(follower_id, followed_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM followers WHERE follower_id = ? AND followed_id = ?", 
+                   (follower_id, followed_id))
+    db.commit()
+    db.close()
+    return True
+
+def get_follower_count(user_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM followers WHERE followed_id = ?", (user_id,))
+    count = cursor.fetchone()[0]
+    db.close()
+    return count
+
+def get_following_count(user_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM followers WHERE follower_id = ?", (user_id,))
+    count = cursor.fetchone()[0]
+    db.close()
+    return count
+
+def is_following(follower_id, followed_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT 1 FROM followers WHERE follower_id = ? AND followed_id = ?", 
+                   (follower_id, followed_id))
+    result = cursor.fetchone()
+    db.close()
+    return result is not None
+
+def get_followers(user_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT users.id, users.name, users.profile_image 
+        FROM followers 
+        JOIN users ON followers.follower_id = users.id 
+        WHERE followers.followed_id = ?
+        ORDER BY followers.created_at DESC
+    """, (user_id,))
+    followers = cursor.fetchall()
+    db.close()
+    return dict_fetchall(followers)
+
+def get_following(user_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT users.id, users.name, users.profile_image 
+        FROM followers 
+        JOIN users ON followers.followed_id = users.id 
+        WHERE followers.follower_id = ?
+        ORDER BY followers.created_at DESC
+    """, (user_id,))
+    following = cursor.fetchall()
+    db.close()
+    return dict_fetchall(following)
