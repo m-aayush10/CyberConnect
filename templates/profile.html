@@ -131,7 +131,8 @@
     <!-- Certifications Section -->
     <div class="mt-8">
         <h3 class="text-xl font-bold mb-3 text-purple-400">🎓 Certifications</h3>
-        
+        <!-- DEBUG: Skills data = {{ user.skills }} -->
+        <!-- DEBUG: Skills length = {{ user.skills|length }} -->
         {% if session.user_id == user.id %}
         <form method="POST" action="{{ url_for('profile.add_certification') }}" class="mb-4 p-4 glass-card rounded-lg">
             <div class="grid md:grid-cols-2 gap-3">
