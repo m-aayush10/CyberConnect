@@ -3,13 +3,11 @@ from db import get_db
 # ========== HELPER FUNCTIONS ==========
 
 def dict_fetchone(row):
-    """Convert a SQLite row to a dictionary"""
     if row is None:
         return None
     return dict(row)
 
 def dict_fetchall(rows):
-    """Convert SQLite rows to a list of dictionaries"""
     return [dict(row) for row in rows]
 
 # ========== USER FUNCTIONS ==========
@@ -65,6 +63,28 @@ def update_cover_photo(user_id, cover_image):
     db.commit()
     db.close()
 
+def get_user_post_count(user_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT COUNT(*) FROM posts WHERE user_id = ?", (user_id,))
+    count = cursor.fetchone()[0]
+    db.close()
+    return count
+
+def get_user_posts(user_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT posts.*, users.name 
+        FROM posts 
+        JOIN users ON posts.user_id = users.id 
+        WHERE posts.user_id = ?
+        ORDER BY posts.created_at DESC
+    """, (user_id,))
+    posts = cursor.fetchall()
+    db.close()
+    return dict_fetchall(posts)
+
 # ========== SKILLS FUNCTIONS ==========
 
 def add_skill(user_id, skill_name, level='Beginner'):
@@ -83,9 +103,9 @@ def get_user_skills(user_id):
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT id, skill_name, level FROM skills WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
-    skills = cursor.fetchall()
+    rows = cursor.fetchall()
     db.close()
-    return dict_fetchall(skills)
+    return dict_fetchall(rows)
 
 def delete_skill(skill_id, user_id):
     db = get_db()
@@ -114,9 +134,9 @@ def get_user_certifications(user_id):
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT id, title, issuer, date_earned, credential_url FROM certifications WHERE user_id = ? ORDER BY date_earned DESC", (user_id,))
-    certs = cursor.fetchall()
+    rows = cursor.fetchall()
     db.close()
-    return dict_fetchall(certs)
+    return dict_fetchall(rows)
 
 def delete_certification(cert_id, user_id):
     db = get_db()
@@ -143,30 +163,6 @@ def update_certification(cert_id, title, issuer, date_earned=None, credential_ur
     """, (title, issuer, date_earned, credential_url, cert_id))
     db.commit()
     db.close()
-
-# ========== POSTS FUNCTIONS ==========
-
-def get_user_post_count(user_id):
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT COUNT(*) FROM posts WHERE user_id = ?", (user_id,))
-    count = cursor.fetchone()[0]
-    db.close()
-    return count
-
-def get_user_posts(user_id):
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("""
-        SELECT posts.*, users.name 
-        FROM posts 
-        JOIN users ON posts.user_id = users.id 
-        WHERE posts.user_id = ?
-        ORDER BY posts.created_at DESC
-    """, (user_id,))
-    posts = cursor.fetchall()
-    db.close()
-    return dict_fetchall(posts)
 
 # ========== LIKES FUNCTIONS ==========
 
@@ -300,9 +296,9 @@ def get_followers(user_id):
         WHERE followers.followed_id = ?
         ORDER BY followers.created_at DESC
     """, (user_id,))
-    followers = cursor.fetchall()
+    rows = cursor.fetchall()
     db.close()
-    return dict_fetchall(followers)
+    return dict_fetchall(rows)
 
 def get_following(user_id):
     db = get_db()
@@ -314,6 +310,6 @@ def get_following(user_id):
         WHERE followers.follower_id = ?
         ORDER BY followers.created_at DESC
     """, (user_id,))
-    following = cursor.fetchall()
+    rows = cursor.fetchall()
     db.close()
-    return dict_fetchall(following)
+    return dict_fetchall(rows)
