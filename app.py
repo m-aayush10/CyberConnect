@@ -1,3 +1,4 @@
+cat > app.py << 'EOF'
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import dotenv
@@ -8,14 +9,6 @@ dotenv.load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
-# app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
-# app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
-# app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
-# app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
-
-# mysql.init_app(app)
-
-from models import get_follower_count
 from routes.auth import auth_bp
 from routes.profile import profile_bp
 from routes.posts import posts_bp
@@ -37,18 +30,13 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
     
-    # Get user's skill count
-    from models import get_user_skills
-    skills = get_user_skills(session['user_id'])
+    from models import get_user_skills, get_user_post_count, get_follower_count
+    
+    user_id = session['user_id']
+    skills = get_user_skills(user_id)
     skill_count = len(skills) if skills else 0
-    
-    # Get user's post count
-    from models import get_user_post_count
-    post_count = get_user_post_count(session['user_id'])
-    
-    # Get user's connections count (placeholder for now)
-    from models import get_follower_count
-    connections_count = get_follower_count(session['user_id'])
+    post_count = get_user_post_count(user_id)
+    connections_count = get_follower_count(user_id)
     
     return render_template('dashboard.html', 
                          user_skill_count=skill_count,
@@ -57,3 +45,4 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(debug=True)
+EOF

@@ -1,3 +1,4 @@
+cat > db.py << 'EOF'
 import sqlite3
 import os
 
@@ -112,3 +113,4 @@ def init_db():
 
 # Initialize the database when this module is imported
 init_db()
+EOF
