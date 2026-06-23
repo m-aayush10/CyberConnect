@@ -1,13 +1,19 @@
-cat > app.py << 'EOF'
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import dotenv
-from db import get_db
+from db import mysql
 
 dotenv.load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'Messi@123')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'cyberconnect')
+
+mysql.init_app(app)
 
 from routes.auth import auth_bp
 from routes.profile import profile_bp
@@ -45,4 +51,3 @@ def dashboard():
 
 if __name__ == '__main__':
     app.run(debug=True)
-EOF
