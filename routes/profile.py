@@ -79,6 +79,35 @@ def delete_skill(skill_id):
     flash('Skill removed', 'success')
     return redirect(url_for('profile.view_profile', user_id=session['user_id']))
 
+@profile_bp.route('/edit_skill/<int:skill_id>', methods=['GET', 'POST'])
+def edit_skill(skill_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    from models import get_skill_by_id, update_skill
+    
+    skill = get_skill_by_id(skill_id)
+    if not skill:
+        flash('Skill not found', 'danger')
+        return redirect(url_for('profile.view_profile', user_id=session['user_id']))
+    
+    # Check if user owns this skill
+    if skill['user_id'] != session['user_id']:
+        flash('You can only edit your own skills', 'danger')
+        return redirect(url_for('profile.view_profile', user_id=session['user_id']))
+    
+    if request.method == 'POST':
+        skill_name = request.form.get('skill_name')
+        level = request.form.get('level')
+        if skill_name:
+            update_skill(skill_id, skill_name, level)
+            flash('Skill updated!', 'success')
+        else:
+            flash('Skill name is required', 'danger')
+        return redirect(url_for('profile.view_profile', user_id=session['user_id']))
+    
+    return render_template('edit_skill.html', skill=skill)
+
 @profile_bp.route('/add_certification', methods=['POST'])
 def add_certification():
     if 'user_id' not in session:
@@ -215,8 +244,9 @@ def follow(user_id):
 @profile_bp.route('/unfollow/<int:user_id>', methods=['POST'])
 def unfollow(user_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
+        return redirect(url_for('auth.login'))
     
     from models import unfollow_user
     unfollow_user(session['user_id'], user_id)
-    return jsonify({'success': True, 'action': 'unfollowed'})
+    flash('User unfollowed', 'success')
+    return redirect(url_for('profile.view_profile', user_id=session['user_id']))

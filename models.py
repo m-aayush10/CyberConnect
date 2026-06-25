@@ -117,6 +117,27 @@ def delete_skill(skill_id, user_id):
     mysql.connection.commit()
     cur.close()
 
+def get_skill_by_id(skill_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM skills WHERE id = %s", (skill_id,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return {
+            'id': row[0],
+            'user_id': row[1],
+            'skill_name': row[2],
+            'level': row[3]
+        }
+    return None
+
+def update_skill(skill_id, skill_name, level):
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE skills SET skill_name = %s, level = %s WHERE id = %s",
+                (skill_name, level, skill_id))
+    mysql.connection.commit()
+    cur.close()
+
 def add_certification(user_id, title, issuer, date_earned=None, credential_url=None):
     try:
         cur = mysql.connection.cursor()
