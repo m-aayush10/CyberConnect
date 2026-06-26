@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberConnect - {% block title %}{% endblock %}</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+</head>
+<body class="text-gray-200">
+    <nav class="glass-card border-b border-cyan-500/30">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="text-xl font-bold text-cyan-400 cyber-text">🔐 CyberConnect</div>
+                <div class="space-x-4">
+                    {% if session.user_id %}
+                        <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-cyan-400 nav-link transition">Dashboard</a>
+                        <a href="{{ url_for('posts.feed') }}" class="text-gray-300 hover:text-cyan-400 nav-link transition">Feed</a>
+                        <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="text-gray-300 hover:text-cyan-400 nav-link transition">Profile</a>
+                        <a href="{{ url_for('auth.logout') }}" class="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1 rounded transition">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="text-gray-300 hover:text-cyan-400 nav-link transition">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn-cyber text-white px-3 py-1 rounded transition">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-3 rounded glass-card border-l-4 {% if category == 'success' %}border-green-500 text-green-300{% elif category == 'danger' %}border-red-500 text-red-300{% else %}border-cyan-500 text-cyan-300{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

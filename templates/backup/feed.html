@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Feed{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Create Post Card -->
+    <div class="glass-card rounded-2xl p-4 mb-6">
+        <div class="flex gap-3">
+            {% if session.user_profile_image %}
+            <img src="{{ session.user_profile_image }}" class="w-10 h-10 rounded-full object-cover">
+            {% else %}
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold">
+                {{ session.user_name[0]|upper if session.user_name else 'U' }}
+            </div>
+            {% endif %}
+            <div class="flex-1">
+                <form method="POST" action="{{ url_for('posts.create_post') }}" enctype="multipart/form-data">
+                    <input type="text" name="content" placeholder="What's on your mind?" class="w-full bg-gray-800/50 border border-gray-700 rounded-full px-4 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" required>
+                    <div class="flex justify-between mt-2">
+                        <div class="flex gap-3">
+                            <label class="cursor-pointer text-gray-400 hover:text-green-500 text-sm flex items-center gap-1">
+                                📷 <span class="text-xs">Photo</span>
+                                <input type="file" name="image_file" accept="image/*" class="hidden">
+                            </label>
+                            <input type="text" name="image_url" placeholder="Image URL" class="bg-gray-800/50 border border-gray-700 rounded-full px-3 py-1 text-xs text-white w-32">
+                        </div>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-full text-sm font-semibold">Post</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display Posts -->
+    {% for post in posts %}
+    <div class="glass-card rounded-2xl p-4 mb-4" id="post-{{ post.id }}">
+        <!-- Post Header -->
+        <div class="flex justify-between items-start">
+            <div class="flex gap-3">
+                <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}">
+                    {% if post.profile_image %}
+                    <img src="{{ post.profile_image }}" class="w-10 h-10 rounded-full object-cover">
+                    {% else %}
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ post.name[0]|upper if post.name else 'U' }}
+                    </div>
+                    {% endif %}
+                </a>
+                <div>
+                    <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}" class="font-semibold text-white hover:text-cyan-400">
+                        {{ post.name }}
+                    </a>
+                    <div class="text-xs text-gray-500">{{ post.created_at }}</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                {% if session.user_id != post.user_id %}
+                    {% if user_following_status and user_following_status.get(post.user_id) %}
+                    <button onclick="toggleFollow({{ post.user_id }}, this)" class="bg-gray-700 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full transition" data-following="true">Following</button>
+                    {% else %}
+                    <button onclick="toggleFollow({{ post.user_id }}, this)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition" data-following="false">Follow</button>
+                    {% endif %}
+                {% endif %}
+                {% if session.user_id == post.user_id %}
+                <div class="relative">
+                    <button onclick="togglePostMenu({{ post.id }})" class="text-gray-400 hover:text-white">⋯</button>
+                    <div id="postMenu{{ post.id }}" class="absolute right-0 mt-1 bg-gray-800 rounded-lg shadow-lg hidden z-10">
+                        <a href="{{ url_for('posts.edit_post', post_id=post.id) }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">✏️ Edit</a>
+                        <a href="{{ url_for('posts.delete_post', post_id=post.id) }}" class="block px-4 py-2 text-sm text-red-400 hover:bg-gray-700" onclick="return confirm('Delete this post?')">🗑️ Delete</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Post Content -->
+        <p class="mt-3 text-gray-200 text-sm">{{ post.content }}</p>
+        {% if post.image_url %}
+        <img src="{{ post.image_url }}" class="mt-3 rounded-xl max-h-96 w-full object-cover">
+        {% endif %}
+        
+        <!-- Like/Comment Count Row -->
+        <div class="flex justify-between items-center mt-3 pt-2 text-xs text-gray-500">
+            <div id="like-count-{{ post.id }}">{{ like_counts.get(post.id, 0) }} likes</div>
+            <div>
+                <button onclick="toggleCommentBox({{ post.id }})" class="text-gray-500 hover:text-cyan-400 transition">
+                    {{ post_comments.get(post.id, [])|length }} comments
+                </button>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex justify-around mt-2 pt-2 border-t border-gray-700">
+            {% if user_has_liked and user_has_liked[post.id] %}
+            <button onclick="toggleLike({{ post.id }}, this)" class="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-semibold" data-liked="true">
+                ❤️ Like
+            </button>
+            {% else %}
+            <button onclick="toggleLike({{ post.id }}, this)" class="flex items-center gap-2 text-gray-400 hover:text-red-500 text-sm font-semibold" data-liked="false">
+                👍 Like
+            </button>
+            {% endif %}
+            <button onclick="toggleCommentBox({{ post.id }})" class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
+                💬 Comment
+            </button>
+            <button class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
+                ↗️ Share
+            </button>
+        </div>
+        
+        <!-- Comments Section -->
+        <div id="commentBox{{ post.id }}" class="hidden mt-3 pt-2 border-t border-gray-700">
+            <form method="POST" action="{{ url_for('posts.add_comment', post_id=post.id) }}" class="flex gap-2">
+                <input type="text" name="content" placeholder="Write a comment..." class="flex-1 bg-gray-800/50 border border-gray-700 rounded-full px-3 py-1 text-sm text-white" required>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full">Post</button>
+            </form>
+            
+            <div class="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                {% for comment in post_comments.get(post.id, []) %}
+                <div class="flex justify-between items-start gap-2">
+                    <div class="flex-1 bg-gray-800/40 rounded-lg p-2">
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('profile.view_profile', user_id=comment.user_id) }}" class="font-semibold text-cyan-400 text-sm hover:underline">
+                                {{ comment.name }}
+                            </a>
+                            <span class="text-xs text-gray-500">{{ comment.created_at }}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mt-1">{{ comment.content }}</p>
+                    </div>
+                    {% if session.user_id == comment.user_id %}
+                    <a href="{{ url_for('posts.delete_comment', comment_id=comment.id) }}" class="text-red-400 hover:text-red-600 text-xs" onclick="return confirm('Delete comment?')">🗑️</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass-card rounded-2xl p-8 text-center">
+        <p class="text-gray-400">No posts yet. Be the first to create a post!</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Toggle Follow/Unfollow with AJAX
+    function toggleFollow(userId, button) {
+        const isFollowing = button.getAttribute('data-following') === 'true';
+        const url = isFollowing ? `/profile/unfollow/${userId}` : `/profile/follow/${userId}`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.action === 'followed') {
+                    button.setAttribute('data-following', 'true');
+                    button.textContent = 'Following';
+                    button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    button.classList.add('bg-gray-700', 'hover:bg-red-600');
+                } else {
+                    button.setAttribute('data-following', 'false');
+                    button.textContent = 'Follow';
+                    button.classList.remove('bg-gray-700', 'hover:bg-red-600');
+                    button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+            } else {
+                alert(data.error || 'Something went wrong');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update follow status');
+        });
+    }
+
+    // Toggle Like/Unlike with AJAX
+    function toggleLike(postId, button) {
+        const isLiked = button.getAttribute('data-liked') === 'true';
+        const url = isLiked ? `/posts/unlike/${postId}` : `/posts/like/${postId}`;
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const likeCountElement = document.getElementById(`like-count-${postId}`);
+                if (data.action === 'liked') {
+                    button.setAttribute('data-liked', 'true');
+                    button.innerHTML = '❤️ Like';
+                    button.classList.remove('text-gray-400', 'hover:text-red-500');
+                    button.classList.add('text-red-500', 'hover:text-red-400');
+                    likeCountElement.textContent = data.like_count + ' likes';
+                } else {
+                    button.setAttribute('data-liked', 'false');
+                    button.innerHTML = '👍 Like';
+                    button.classList.remove('text-red-500', 'hover:text-red-400');
+                    button.classList.add('text-gray-400', 'hover:text-red-500');
+                    likeCountElement.textContent = data.like_count + ' likes';
+                }
+            } else {
+                alert(data.error || 'Something went wrong');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update like status');
+        });
+    }
+
+    function togglePostMenu(postId) {
+        const menu = document.getElementById('postMenu' + postId);
+        if (menu) {
+            menu.classList.toggle('hidden');
+        }
+    }
+    
+    function toggleCommentBox(postId) {
+        const box = document.getElementById('commentBox' + postId);
+        if (box) {
+            box.classList.toggle('hidden');
+        }
+    }
+    
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('[onclick*="togglePostMenu"]')) {
+            document.querySelectorAll('[id^="postMenu"]').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+</script>
+{% endblock %}

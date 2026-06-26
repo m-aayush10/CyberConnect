@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Post{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="glass-card rounded-2xl p-6">
+        <h2 class="text-2xl font-bold mb-6 cyber-text">Edit Your Post</h2>
+        
+        <form method="POST">
+            <div class="mb-4">
+                <label style="color: #00d4ff; font-weight: bold;">Content</label>
+                <textarea name="content" rows="5" required class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white">{{ post.content }}</textarea>
+            </div>
+            <div class="mb-4">
+                <label style="color: #00d4ff; font-weight: bold;">Image URL (optional)</label>
+                <input type="text" name="image_url" value="{{ post.image_url or '' }}" class="w-full p-3 rounded bg-gray-800 border border-cyan-500/30 text-white">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="btn-cyber px-6 py-2 rounded">Save Changes</button>
+                <a href="{{ url_for('posts.feed') }}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded transition">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
