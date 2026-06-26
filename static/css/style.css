@@ -721,3 +721,54 @@ hr { border-color: var(--border-subtle) !important; }
 
 img.post-img    { border-color: var(--border-subtle) !important; }
 img.post-avatar { border-color: rgba(0,212,255,0.35) !important; }
+
+/* ── Fix placeholder visibility ── */
+input::placeholder,
+textarea::placeholder,
+.skills-input::placeholder,
+.create-textarea::placeholder,
+.cmnt-input::placeholder,
+.auth-input::placeholder,
+.cert-input::placeholder {
+    color: #6b8aaa !important;
+    opacity: 1 !important;
+}
+
+/* ── Fix certification date visibility ── */
+.cert-date,
+.mini-post-ts,
+.post-time,
+.follow-stat-lbl,
+.stat-label,
+.text-muted {
+    color: #7a9bb5 !important;
+}
+
+/* ── Fix "Earned:" text ── */
+.cert-date {
+    color: #6b8aaa !important;
+    font-weight: 500 !important;
+}
+
+/* ── Make stat labels more visible ── */
+.stat-label,
+.follow-stat-lbl {
+    color: #7a9bb5 !important;
+    font-weight: 600 !important;
+}
+
+/* ── Fix "Connections Posts" text ── */
+.stat-label,
+.sidebar-stat-lbl {
+    color: #7a9bb5 !important;
+}
+
+/* ── Fix skill input placeholder ── */
+.skills-input::placeholder {
+    color: #6b8aaa !important;
+}
+
+/* ── Fix create post placeholder ── */
+.create-textarea::placeholder {
+    color: #6b8aaa !important;
+}
