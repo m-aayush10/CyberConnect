@@ -1,242 +1,490 @@
 {% extends "base.html" %}
-
 {% block title %}Feed{% endblock %}
-
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <!-- Create Post Card -->
-    <div class="glass-card rounded-2xl p-4 mb-6">
-        <div class="flex gap-3">
-            {% if session.user_profile_image %}
-            <img src="{{ session.user_profile_image }}" class="w-10 h-10 rounded-full object-cover">
-            {% else %}
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold">
-                {{ session.user_name[0]|upper if session.user_name else 'U' }}
+
+<style>
+    .feed-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+        align-items: start;
+    }
+    @media (max-width: 900px) { .feed-layout { grid-template-columns: 1fr; } .feed-right { display: none; } }
+
+    /* Create post */
+    .create-card {
+        background: rgba(8,18,40,0.85);
+        border: 1px solid rgba(0,80,255,0.14);
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+    .create-row { display: flex; gap: 12px; align-items: flex-start; }
+    .mini-avatar {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 16px; color: white;
+        flex-shrink: 0;
+    }
+    .create-textarea {
+        flex: 1; background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(0,80,255,0.12);
+        border-radius: 14px; padding: 12px 16px;
+        color: #e2e8f0; font-size: 14px; resize: none;
+        outline: none; transition: all 0.2s; min-height: 46px;
+        font-family: inherit; line-height: 1.5;
+    }
+    .create-textarea:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        min-height: 90px;
+    }
+    .create-textarea::placeholder { color: #1e3a5f; }
+    .create-actions {
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 12px; padding-top: 12px;
+        border-top: 1px solid rgba(0,80,255,0.08);
+        flex-wrap: wrap;
+    }
+    .create-btn-media {
+        display: flex; align-items: center; gap: 6px;
+        padding: 7px 14px; border-radius: 8px;
+        background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(0,80,255,0.12);
+        color: #475569; font-size: 12px; font-weight: 500;
+        cursor: pointer; transition: all 0.18s;
+    }
+    .create-btn-media:hover { background: rgba(59,130,246,0.1); color: #60a5fa; border-color: rgba(59,130,246,0.25); }
+    .create-url-input {
+        flex: 1; min-width: 120px;
+        background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 8px; padding: 7px 12px;
+        color: #64748b; font-size: 12px; outline: none;
+        transition: border-color 0.2s;
+    }
+    .create-url-input:focus { border-color: rgba(59,130,246,0.4); }
+    .create-url-input::placeholder { color: #1e2d4a; }
+    .btn-submit-post {
+        margin-left: auto;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        color: white; border: none; padding: 8px 22px;
+        border-radius: 10px; font-size: 13px; font-weight: 700;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .btn-submit-post:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.35); }
+
+    /* Post card */
+    .post-card {
+        background: rgba(8,18,40,0.85);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 18px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .post-card:hover { border-color: rgba(59,130,246,0.22); box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+    .post-top { padding: 16px 18px 0; display: flex; align-items: flex-start; gap: 12px; }
+    .post-av {
+        width: 42px; height: 42px; border-radius: 12px;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 16px; color: white;
+        flex-shrink: 0; text-decoration: none;
+        border: 1.5px solid rgba(59,130,246,0.25);
+        overflow: hidden;
+    }
+    .post-av img { width: 100%; height: 100%; object-fit: cover; }
+    .post-name {
+        font-size: 14px; font-weight: 700; color: #e2e8f0;
+        text-decoration: none; transition: color 0.15s;
+    }
+    .post-name:hover { color: #60a5fa; }
+    .post-time { font-size: 11px; color: #334155; margin-top: 2px; }
+    .post-header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .btn-follow {
+        padding: 5px 14px; border-radius: 20px; border: none;
+        font-size: 12px; font-weight: 600; cursor: pointer;
+        transition: all 0.18s;
+    }
+    .btn-follow[data-following="false"] {
+        background: rgba(59,130,246,0.12); color: #60a5fa;
+        border: 1px solid rgba(59,130,246,0.25);
+    }
+    .btn-follow[data-following="false"]:hover { background: rgba(59,130,246,0.2); }
+    .btn-follow[data-following="true"] {
+        background: rgba(71,85,105,0.12); color: #64748b;
+        border: 1px solid rgba(71,85,105,0.2);
+    }
+    .btn-follow[data-following="true"]:hover { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+    .post-menu-wrap { position: relative; }
+    .post-more {
+        background: none; border: none; color: #334155;
+        font-size: 18px; cursor: pointer; padding: 4px 8px;
+        border-radius: 6px; transition: all 0.15s;
+    }
+    .post-more:hover { background: rgba(255,255,255,0.05); color: #64748b; }
+    .post-dropdown {
+        position: absolute; right: 0; top: calc(100% + 6px);
+        background: #0a1628; border: 1px solid rgba(0,80,255,0.15);
+        border-radius: 12px; min-width: 148px; z-index: 50;
+        overflow: hidden; display: none;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .post-dropdown.open { display: block; }
+    .post-dd-item {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px; font-size: 13px; color: #64748b;
+        text-decoration: none; transition: all 0.15s;
+    }
+    .post-dd-item:hover { background: rgba(255,255,255,0.04); color: #94a3b8; text-decoration: none; }
+    .post-dd-item.red:hover { background: rgba(239,68,68,0.07); color: #f87171; }
+
+    .post-body { padding: 14px 18px; }
+    .post-text { font-size: 14px; color: #94a3b8; line-height: 1.7; white-space: pre-wrap; }
+    .post-img { width: 100%; max-height: 440px; object-fit: cover; display: block; }
+
+    .post-meta {
+        padding: 8px 18px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 12px; color: #334155;
+    }
+    .like-badge {
+        display: flex; align-items: center; gap: 6px;
+    }
+    .like-pip {
+        width: 18px; height: 18px; border-radius: 50%;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px;
+    }
+    .cmnt-toggle { background: none; border: none; color: #334155; font-size: 12px; cursor: pointer; transition: color 0.15s; }
+    .cmnt-toggle:hover { color: #60a5fa; }
+
+    .post-actions {
+        display: flex; border-top: 1px solid rgba(0,80,255,0.06);
+        padding: 2px 10px 4px;
+    }
+    .post-act-btn {
+        flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+        padding: 9px 0; background: none; border: none;
+        font-size: 13px; font-weight: 500; color: #334155;
+        cursor: pointer; border-radius: 10px; transition: all 0.15s;
+    }
+    .post-act-btn:hover { background: rgba(59,130,246,0.07); color: #60a5fa; }
+    .post-act-btn.liked { color: #ef4444; }
+    .post-act-btn.liked:hover { background: rgba(239,68,68,0.07); color: #f87171; }
+    .post-act-btn svg { width: 16px; height: 16px; }
+
+    /* Comments */
+    .comments-wrap {
+        border-top: 1px solid rgba(0,80,255,0.07);
+        padding: 14px 18px;
+        display: none;
+    }
+    .comments-wrap.open { display: block; }
+    .cmnt-form { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .cmnt-input {
+        flex: 1; background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 20px; padding: 8px 16px;
+        color: #e2e8f0; font-size: 13px; outline: none; transition: border-color 0.2s;
+    }
+    .cmnt-input:focus { border-color: rgba(59,130,246,0.4); }
+    .cmnt-input::placeholder { color: #1e3a5f; }
+    .btn-cmnt-post {
+        background: rgba(59,130,246,0.12); color: #60a5fa;
+        border: 1px solid rgba(59,130,246,0.2);
+        padding: 7px 16px; border-radius: 20px;
+        font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.18s;
+    }
+    .btn-cmnt-post:hover { background: rgba(59,130,246,0.2); }
+    .cmnt-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; }
+    .cmnt-item { display: flex; gap: 10px; }
+    .cmnt-av {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700; color: white; flex-shrink: 0;
+        overflow: hidden;
+    }
+    .cmnt-av img { width: 100%; height: 100%; object-fit: cover; }
+    .cmnt-bubble {
+        flex: 1; background: rgba(15,30,70,0.4);
+        border-radius: 4px 12px 12px 12px; padding: 9px 13px;
+        border: 1px solid rgba(0,80,255,0.08);
+    }
+    .cmnt-author { font-size: 12px; font-weight: 700; color: #60a5fa; text-decoration: none; }
+    .cmnt-author:hover { text-decoration: underline; }
+    .cmnt-ts { font-size: 10px; color: #1e3a5f; margin-left: 6px; }
+    .cmnt-text { font-size: 13px; color: #64748b; margin-top: 3px; line-height: 1.5; }
+    .btn-del-cmnt {
+        background: none; border: none; color: #1e3a5f;
+        cursor: pointer; padding: 4px; border-radius: 4px;
+        font-size: 12px; transition: color 0.15s; align-self: flex-start; margin-top: 8px;
+    }
+    .btn-del-cmnt:hover { color: #f87171; }
+
+    /* Right panel */
+    .right-panel { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
+    .panel-card {
+        background: rgba(8,18,40,0.85);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 16px; padding: 20px;
+    }
+    .panel-title {
+        font-size: 11px; font-weight: 700; color: #334155;
+        text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;
+    }
+    .tag-chip {
+        display: inline-flex; align-items: center;
+        background: rgba(59,130,246,0.07);
+        border: 1px solid rgba(59,130,246,0.14);
+        color: #3b82f6; font-size: 11px; font-weight: 600;
+        padding: 4px 11px; border-radius: 20px; margin: 3px;
+        text-decoration: none; transition: all 0.15s;
+    }
+    .tag-chip:hover { background: rgba(59,130,246,0.15); color: #60a5fa; text-decoration: none; }
+
+    /* Empty state */
+    .empty-feed {
+        text-align: center; padding: 60px 24px;
+        background: rgba(8,18,40,0.6);
+        border: 1px dashed rgba(59,130,246,0.15); border-radius: 18px;
+    }
+    .empty-feed-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-feed-title { font-size: 16px; font-weight: 700; color: #334155; }
+    .empty-feed-sub { font-size: 13px; color: #1e3a5f; margin-top: 6px; }
+</style>
+
+<div class="feed-layout">
+<div>
+    <!-- Create Post -->
+    <div class="create-card">
+        <form method="POST" action="{{ url_for('posts.create_post') }}" enctype="multipart/form-data">
+            <div class="create-row">
+                <div class="mini-avatar">{{ session.user_name[0]|upper if session.user_name else 'U' }}</div>
+                <textarea
+                    name="content"
+                    class="create-textarea"
+                    placeholder="Share a threat intel, CTF write-up, or security tip…"
+                    required
+                    rows="1"
+                    oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                ></textarea>
             </div>
-            {% endif %}
-            <div class="flex-1">
-                <form method="POST" action="{{ url_for('posts.create_post') }}" enctype="multipart/form-data">
-                    <input type="text" name="content" placeholder="What's on your mind?" class="w-full bg-gray-800/50 border border-gray-700 rounded-full px-4 py-2 text-white text-sm focus:outline-none focus:border-cyan-500" required>
-                    <div class="flex justify-between mt-2">
-                        <div class="flex gap-3">
-                            <label class="cursor-pointer text-gray-400 hover:text-green-500 text-sm flex items-center gap-1">
-                                📷 <span class="text-xs">Photo</span>
-                                <input type="file" name="image_file" accept="image/*" class="hidden">
-                            </label>
-                            <input type="text" name="image_url" placeholder="Image URL" class="bg-gray-800/50 border border-gray-700 rounded-full px-3 py-1 text-xs text-white w-32">
-                        </div>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-full text-sm font-semibold">Post</button>
-                    </div>
-                </form>
+            <div class="create-actions">
+                <label class="create-btn-media" title="Attach image">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Photo
+                    <input type="file" name="image_file" accept="image/*" class="hidden" onchange="this.parentElement.style.color='#60a5fa'">
+                </label>
+                <input type="text" name="image_url" class="create-url-input" placeholder="or paste image URL…">
+                <button type="submit" class="btn-submit-post">Publish</button>
             </div>
-        </div>
+        </form>
     </div>
 
-    <!-- Display Posts -->
+    <!-- Posts -->
     {% for post in posts %}
-    <div class="glass-card rounded-2xl p-4 mb-4" id="post-{{ post.id }}">
-        <!-- Post Header -->
-        <div class="flex justify-between items-start">
-            <div class="flex gap-3">
-                <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}">
-                    {% if post.profile_image %}
-                    <img src="{{ post.profile_image }}" class="w-10 h-10 rounded-full object-cover">
-                    {% else %}
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold">
-                        {{ post.name[0]|upper if post.name else 'U' }}
-                    </div>
-                    {% endif %}
-                </a>
-                <div>
-                    <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}" class="font-semibold text-white hover:text-cyan-400">
-                        {{ post.name }}
-                    </a>
-                    <div class="text-xs text-gray-500">{{ post.created_at }}</div>
-                </div>
+    <article class="post-card" id="post-{{ post.id }}">
+        <div class="post-top">
+            <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}" class="post-av">
+                {% if post.profile_image %}<img src="{{ post.profile_image }}" alt="{{ post.name }}">
+                {% else %}{{ post.name[0]|upper if post.name else 'U' }}{% endif %}
+            </a>
+            <div style="flex:1;min-width:0;">
+                <a href="{{ url_for('profile.view_profile', user_id=post.user_id) }}" class="post-name">{{ post.name }}</a>
+                <div class="post-time">{{ post.created_at }}</div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="post-header-right">
                 {% if session.user_id != post.user_id %}
                     {% if user_following_status and user_following_status.get(post.user_id) %}
-                    <button onclick="toggleFollow({{ post.user_id }}, this)" class="bg-gray-700 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-full transition" data-following="true">Following</button>
+                    <button class="btn-follow" data-following="true" onclick="toggleFollow({{ post.user_id }}, this)">✓ Following</button>
                     {% else %}
-                    <button onclick="toggleFollow({{ post.user_id }}, this)" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition" data-following="false">Follow</button>
+                    <button class="btn-follow" data-following="false" onclick="toggleFollow({{ post.user_id }}, this)">+ Follow</button>
                     {% endif %}
                 {% endif %}
                 {% if session.user_id == post.user_id %}
-                <div class="relative">
-                    <button onclick="togglePostMenu({{ post.id }})" class="text-gray-400 hover:text-white">⋯</button>
-                    <div id="postMenu{{ post.id }}" class="absolute right-0 mt-1 bg-gray-800 rounded-lg shadow-lg hidden z-10">
-                        <a href="{{ url_for('posts.edit_post', post_id=post.id) }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">✏️ Edit</a>
-                        <a href="{{ url_for('posts.delete_post', post_id=post.id) }}" class="block px-4 py-2 text-sm text-red-400 hover:bg-gray-700" onclick="return confirm('Delete this post?')">🗑️ Delete</a>
+                <div class="post-menu-wrap">
+                    <button class="post-more" onclick="toggleMenu('dd-{{ post.id }}', event)">⋯</button>
+                    <div class="post-dropdown" id="dd-{{ post.id }}">
+                        <a href="{{ url_for('posts.edit_post', post_id=post.id) }}" class="post-dd-item">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            Edit post
+                        </a>
+                        <a href="{{ url_for('posts.delete_post', post_id=post.id) }}" class="post-dd-item red" onclick="return confirm('Delete this post?')">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Delete post
+                        </a>
                     </div>
                 </div>
                 {% endif %}
             </div>
         </div>
-        
-        <!-- Post Content -->
-        <p class="mt-3 text-gray-200 text-sm">{{ post.content }}</p>
+
+        <div class="post-body"><p class="post-text">{{ post.content }}</p></div>
+
         {% if post.image_url %}
-        <img src="{{ post.image_url }}" class="mt-3 rounded-xl max-h-96 w-full object-cover">
+        <img src="{{ post.image_url }}" class="post-img" alt="Post image" loading="lazy">
         {% endif %}
-        
-        <!-- Like/Comment Count Row -->
-        <div class="flex justify-between items-center mt-3 pt-2 text-xs text-gray-500">
-            <div id="like-count-{{ post.id }}">{{ like_counts.get(post.id, 0) }} likes</div>
-            <div>
-                <button onclick="toggleCommentBox({{ post.id }})" class="text-gray-500 hover:text-cyan-400 transition">
-                    {{ post_comments.get(post.id, [])|length }} comments
-                </button>
+
+        <div class="post-meta">
+            <div class="like-badge">
+                {% if like_counts.get(post.id, 0) > 0 %}
+                <div class="like-pip">♥</div>
+                <span id="like-count-{{ post.id }}">{{ like_counts.get(post.id, 0) }}</span>
+                {% else %}
+                <span id="like-count-{{ post.id }}">0</span>
+                {% endif %}
             </div>
+            {% set cc = post_comments.get(post.id, [])|length %}
+            {% if cc > 0 %}
+            <button class="cmnt-toggle" onclick="toggleComments({{ post.id }})">{{ cc }} comment{{ 's' if cc != 1 else '' }}</button>
+            {% endif %}
         </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex justify-around mt-2 pt-2 border-t border-gray-700">
+
+        <div class="post-actions">
             {% if user_has_liked and user_has_liked[post.id] %}
-            <button onclick="toggleLike({{ post.id }}, this)" class="flex items-center gap-2 text-red-500 hover:text-red-400 text-sm font-semibold" data-liked="true">
-                ❤️ Like
+            <button class="post-act-btn liked" data-liked="true" onclick="toggleLike({{ post.id }}, this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                Liked
             </button>
             {% else %}
-            <button onclick="toggleLike({{ post.id }}, this)" class="flex items-center gap-2 text-gray-400 hover:text-red-500 text-sm font-semibold" data-liked="false">
-                👍 Like
+            <button class="post-act-btn" data-liked="false" onclick="toggleLike({{ post.id }}, this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                Like
             </button>
             {% endif %}
-            <button onclick="toggleCommentBox({{ post.id }})" class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
-                💬 Comment
+            <button class="post-act-btn" onclick="toggleComments({{ post.id }})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                Comment
             </button>
-            <button class="flex items-center gap-2 text-gray-400 hover:text-blue-500 text-sm font-semibold">
-                ↗️ Share
+            <button class="post-act-btn" onclick="copyLink({{ post.id }})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Share
             </button>
         </div>
-        
-        <!-- Comments Section -->
-        <div id="commentBox{{ post.id }}" class="hidden mt-3 pt-2 border-t border-gray-700">
-            <form method="POST" action="{{ url_for('posts.add_comment', post_id=post.id) }}" class="flex gap-2">
-                <input type="text" name="content" placeholder="Write a comment..." class="flex-1 bg-gray-800/50 border border-gray-700 rounded-full px-3 py-1 text-sm text-white" required>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full">Post</button>
+
+        <div class="comments-wrap" id="cmnt-{{ post.id }}">
+            <form method="POST" action="{{ url_for('posts.add_comment', post_id=post.id) }}" class="cmnt-form">
+                <input type="text" name="content" class="cmnt-input" placeholder="Add a comment…" required>
+                <button type="submit" class="btn-cmnt-post">Post</button>
             </form>
-            
-            <div class="mt-3 space-y-2 max-h-60 overflow-y-auto">
-                {% for comment in post_comments.get(post.id, []) %}
-                <div class="flex justify-between items-start gap-2">
-                    <div class="flex-1 bg-gray-800/40 rounded-lg p-2">
-                        <div class="flex items-center gap-2">
-                            <a href="{{ url_for('profile.view_profile', user_id=comment.user_id) }}" class="font-semibold text-cyan-400 text-sm hover:underline">
-                                {{ comment.name }}
-                            </a>
-                            <span class="text-xs text-gray-500">{{ comment.created_at }}</span>
-                        </div>
-                        <p class="text-gray-300 text-sm mt-1">{{ comment.content }}</p>
+            {% if post_comments.get(post.id) %}
+            <div class="cmnt-list">
+                {% for c in post_comments.get(post.id, []) %}
+                <div class="cmnt-item">
+                    <div class="cmnt-av">
+                        {% if c.profile_image %}<img src="{{ c.profile_image }}" alt="{{ c.name }}">
+                        {% else %}{{ c.name[0]|upper if c.name else 'U' }}{% endif %}
                     </div>
-                    {% if session.user_id == comment.user_id %}
-                    <a href="{{ url_for('posts.delete_comment', comment_id=comment.id) }}" class="text-red-400 hover:text-red-600 text-xs" onclick="return confirm('Delete comment?')">🗑️</a>
+                    <div class="cmnt-bubble">
+                        <a href="{{ url_for('profile.view_profile', user_id=c.user_id) }}" class="cmnt-author">{{ c.name }}</a>
+                        <span class="cmnt-ts">{{ c.created_at }}</span>
+                        <p class="cmnt-text">{{ c.content }}</p>
+                    </div>
+                    {% if session.user_id == c.user_id %}
+                    <a href="{{ url_for('posts.delete_comment', comment_id=c.id) }}" class="btn-del-cmnt" onclick="return confirm('Delete?')" title="Delete">✕</a>
                     {% endif %}
                 </div>
                 {% endfor %}
             </div>
+            {% endif %}
         </div>
-    </div>
+    </article>
     {% else %}
-    <div class="glass-card rounded-2xl p-8 text-center">
-        <p class="text-gray-400">No posts yet. Be the first to create a post!</p>
+    <div class="empty-feed">
+        <div class="empty-feed-icon">🔐</div>
+        <div class="empty-feed-title">The feed is quiet — be the first to post</div>
+        <div class="empty-feed-sub">Share a write-up, tool review, or security insight above.</div>
     </div>
     {% endfor %}
 </div>
 
+<!-- Right panel -->
+<aside class="right-panel feed-right">
+    <div class="panel-card">
+        <div class="panel-title">Trending Tags</div>
+        <span class="tag-chip">#PenTesting</span>
+        <span class="tag-chip">#CTF</span>
+        <span class="tag-chip">#BugBounty</span>
+        <span class="tag-chip">#OSCP</span>
+        <span class="tag-chip">#BlueTeam</span>
+        <span class="tag-chip">#RedTeam</span>
+        <span class="tag-chip">#ThreatIntel</span>
+        <span class="tag-chip">#Malware</span>
+        <span class="tag-chip">#ZeroDay</span>
+        <span class="tag-chip">#SOC</span>
+    </div>
+    <div class="panel-card">
+        <div class="panel-title">Your Stats</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+                <span style="color:#475569;">Connections</span>
+                <span style="color:#60a5fa;font-weight:700;">{{ user_connections_count|default(0) }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+                <span style="color:#475569;">Posts</span>
+                <span style="color:#34d399;font-weight:700;">{{ user_post_count|default(0) }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+                <span style="color:#475569;">Skills</span>
+                <span style="color:#a78bfa;font-weight:700;">{{ user_skill_count|default(0) }}</span>
+            </div>
+        </div>
+    </div>
+</aside>
+</div>
+
 <script>
-    // Toggle Follow/Unfollow with AJAX
-    function toggleFollow(userId, button) {
-        const isFollowing = button.getAttribute('data-following') === 'true';
-        const url = isFollowing ? `/profile/unfollow/${userId}` : `/profile/follow/${userId}`;
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.action === 'followed') {
-                    button.setAttribute('data-following', 'true');
-                    button.textContent = 'Following';
-                    button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                    button.classList.add('bg-gray-700', 'hover:bg-red-600');
-                } else {
-                    button.setAttribute('data-following', 'false');
-                    button.textContent = 'Follow';
-                    button.classList.remove('bg-gray-700', 'hover:bg-red-600');
-                    button.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                }
-            } else {
-                alert(data.error || 'Something went wrong');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to update follow status');
-        });
-    }
-
-    // Toggle Like/Unlike with AJAX
-    function toggleLike(postId, button) {
-        const isLiked = button.getAttribute('data-liked') === 'true';
-        const url = isLiked ? `/posts/unlike/${postId}` : `/posts/like/${postId}`;
-        
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const likeCountElement = document.getElementById(`like-count-${postId}`);
-                if (data.action === 'liked') {
-                    button.setAttribute('data-liked', 'true');
-                    button.innerHTML = '❤️ Like';
-                    button.classList.remove('text-gray-400', 'hover:text-red-500');
-                    button.classList.add('text-red-500', 'hover:text-red-400');
-                    likeCountElement.textContent = data.like_count + ' likes';
-                } else {
-                    button.setAttribute('data-liked', 'false');
-                    button.innerHTML = '👍 Like';
-                    button.classList.remove('text-red-500', 'hover:text-red-400');
-                    button.classList.add('text-gray-400', 'hover:text-red-500');
-                    likeCountElement.textContent = data.like_count + ' likes';
-                }
-            } else {
-                alert(data.error || 'Something went wrong');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to update like status');
-        });
-    }
-
-    function togglePostMenu(postId) {
-        const menu = document.getElementById('postMenu' + postId);
-        if (menu) {
-            menu.classList.toggle('hidden');
+function toggleLike(postId, btn) {
+    const isLiked = btn.getAttribute('data-liked') === 'true';
+    fetch(isLiked ? `/posts/unlike/${postId}` : `/posts/like/${postId}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.json()).then(d => {
+        if (!d.success) return;
+        const el = document.getElementById('like-count-' + postId);
+        if (d.action === 'liked') {
+            btn.setAttribute('data-liked', 'true'); btn.classList.add('liked');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Liked';
+        } else {
+            btn.setAttribute('data-liked', 'false'); btn.classList.remove('liked');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:16px;height:16px"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Like';
         }
-    }
-    
-    function toggleCommentBox(postId) {
-        const box = document.getElementById('commentBox' + postId);
-        if (box) {
-            box.classList.toggle('hidden');
-        }
-    }
-    
-    document.addEventListener('click', function(event) {
-        if (!event.target.closest('[onclick*="togglePostMenu"]')) {
-            document.querySelectorAll('[id^="postMenu"]').forEach(menu => {
-                menu.classList.add('hidden');
-            });
+        if (el) el.textContent = d.like_count;
+    });
+}
+function toggleFollow(uid, btn) {
+    const iF = btn.getAttribute('data-following') === 'true';
+    fetch(iF ? `/profile/unfollow/${uid}` : `/profile/follow/${uid}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            if (d.action === 'followed') { btn.setAttribute('data-following','true'); btn.textContent='✓ Following'; }
+            else { btn.setAttribute('data-following','false'); btn.textContent='+ Follow'; }
         }
     });
+}
+function toggleComments(id) {
+    document.getElementById('cmnt-' + id).classList.toggle('open');
+}
+function toggleMenu(id, e) {
+    e.stopPropagation();
+    const el = document.getElementById(id);
+    const open = el.classList.contains('open');
+    document.querySelectorAll('.post-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (!open) el.classList.add('open');
+}
+document.addEventListener('click', () => document.querySelectorAll('.post-dropdown.open').forEach(d => d.classList.remove('open')));
+function copyLink(id) {
+    navigator.clipboard && navigator.clipboard.writeText(window.location.origin + '/posts/feed#post-' + id).then(() => {
+        const t = document.createElement('div');
+        t.textContent = 'Link copied!';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0a1628;color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+        document.body.appendChild(t); setTimeout(() => t.remove(), 2000);
+    });
+}
 </script>
 {% endblock %}

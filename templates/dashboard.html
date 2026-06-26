@@ -1,26 +1,163 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard{% endblock %}
-
 {% block content %}
-<div class="glass-card rounded-2xl p-8">
-    <h1 class="text-3xl font-bold mb-6 cyber-text">Welcome, {{ session.user_name }}! 🎉</h1>
-    <div class="grid md:grid-cols-3 gap-6">
-        <div class="glass-card rounded-xl p-6 text-center border border-cyan-500/30 hover:border-cyan-500 transition">
-            <div class="text-4xl mb-2">🔗</div>
-            <div class="text-2xl font-bold text-cyan-400">{{ user_connections_count|default(0) }}</div>
-            <div class="text-gray-400">Connections</div>
-        </div>
-        <div class="glass-card rounded-xl p-6 text-center border border-green-500/30 hover:border-green-500 transition">
-            <div class="text-4xl mb-2">📝</div>
-            <div class="text-2xl font-bold text-green-400">{{ user_post_count|default(0) }}</div>
-            <div class="text-gray-400">Posts</div>
-        </div>
-        <div class="glass-card rounded-xl p-6 text-center border border-yellow-500/30 hover:border-yellow-500 transition">
-            <div class="text-4xl mb-2">🏅</div>
-            <div class="text-2xl font-bold text-yellow-400">{{ user_skill_count|default(0) }}</div>
-            <div class="text-gray-400">Skills</div>
-        </div>
+
+<style>
+    .dash-header {
+        margin-bottom: 32px;
+    }
+    .dash-greeting {
+        font-size: 26px;
+        font-weight: 800;
+        color: #f0f6ff;
+        letter-spacing: -0.02em;
+    }
+    .dash-greeting span {
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .dash-sub { font-size: 14px; color: #475569; margin-top: 4px; }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    @media (max-width: 640px) { .stat-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+        background: rgba(8,18,40,0.8);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 16px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        border-radius: 16px 16px 0 0;
+    }
+    .stat-card.blue::before  { background: linear-gradient(90deg, #1d4ed8, #3b82f6); }
+    .stat-card.green::before { background: linear-gradient(90deg, #065f46, #10b981); }
+    .stat-card.purple::before{ background: linear-gradient(90deg, #4c1d95, #8b5cf6); }
+
+    .stat-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; margin-bottom: 16px;
+    }
+    .stat-icon.blue  { background: rgba(59,130,246,0.12); }
+    .stat-icon.green { background: rgba(16,185,129,0.12); }
+    .stat-icon.purple{ background: rgba(139,92,246,0.12); }
+
+    .stat-number { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
+    .stat-number.blue  { color: #60a5fa; }
+    .stat-number.green { color: #34d399; }
+    .stat-number.purple{ color: #a78bfa; }
+    .stat-label { font-size: 12px; color: #475569; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 6px; }
+
+    .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    @media (max-width: 640px) { .quick-grid { grid-template-columns: 1fr; } }
+
+    .quick-card {
+        background: rgba(8,18,40,0.8);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .quick-card:hover {
+        background: rgba(30,60,120,0.2);
+        border-color: rgba(59,130,246,0.3);
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    .quick-card-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; flex-shrink: 0;
+    }
+    .quick-card-title { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+    .quick-card-desc  { font-size: 12px; color: #475569; margin-top: 2px; }
+
+    .section-title {
+        font-size: 14px; font-weight: 700; color: #334155;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        margin-bottom: 14px;
+    }
+</style>
+
+<div class="dash-header">
+    <div class="dash-greeting">Good to see you, <span>{{ session.user_name }}</span> 👋</div>
+    <div class="dash-sub">Here's what's happening on your network today.</div>
+</div>
+
+<!-- Stats -->
+<div class="stat-grid">
+    <div class="stat-card blue">
+        <div class="stat-icon blue">🔗</div>
+        <div class="stat-number blue">{{ user_connections_count|default(0) }}</div>
+        <div class="stat-label">Connections</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green">📝</div>
+        <div class="stat-number green">{{ user_post_count|default(0) }}</div>
+        <div class="stat-label">Posts</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-icon purple">🛡️</div>
+        <div class="stat-number purple">{{ user_skill_count|default(0) }}</div>
+        <div class="stat-label">Skills</div>
     </div>
 </div>
+
+<!-- Quick Actions -->
+<div class="section-title">Quick Actions</div>
+<div class="quick-grid">
+    <a href="{{ url_for('posts.feed') }}" class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(59,130,246,0.12);">📡</div>
+        <div>
+            <div class="quick-card-title">Browse Feed</div>
+            <div class="quick-card-desc">See what the community is sharing</div>
+        </div>
+    </a>
+    <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(139,92,246,0.12);">👤</div>
+        <div>
+            <div class="quick-card-title">View Profile</div>
+            <div class="quick-card-desc">Skills, certs &amp; your posts</div>
+        </div>
+    </a>
+    <a href="{{ url_for('profile.edit_profile') }}" class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(16,185,129,0.12);">✏️</div>
+        <div>
+            <div class="quick-card-title">Edit Profile</div>
+            <div class="quick-card-desc">Update bio &amp; profile picture</div>
+        </div>
+    </a>
+    <a href="{{ url_for('posts.feed') }}" class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(245,158,11,0.12);">🚀</div>
+        <div>
+            <div class="quick-card-title">Create Post</div>
+            <div class="quick-card-desc">Share a threat intel or write-up</div>
+        </div>
+    </a>
+</div>
+
 {% endblock %}

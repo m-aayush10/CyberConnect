@@ -1,211 +1,425 @@
 {% extends "base.html" %}
-
-{% block title %}Profile{% endblock %}
-
+{% block title %}{{ user.name }}'s Profile{% endblock %}
 {% block content %}
-<div class="glass-card rounded-2xl p-6">
-    <div class="flex items-center space-x-4">
-        <!-- Profile Picture -->
-        {% if user.profile_image %}
-        <img src="{{ user.profile_image }}" alt="Profile" style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 2px solid #00d4ff;">
-        {% else %}
-        <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-3xl text-white border-2 border-cyan-500/30">
-            {{ user.name[0]|upper if user.name else 'U' }}
-        </div>
-        {% endif %}
-        
-        <div>
-            <h1 class="text-2xl font-bold cyber-text">{{ user.name }}</h1>
-            <p class="text-gray-400">{{ user.email }}</p>
-            <p class="mt-2 text-gray-300">{{ user.bio or "No bio yet." }}</p>
-        </div>
+
+<style>
+    /* Cover */
+    .cover-wrap {
+        height: 180px; border-radius: 18px; overflow: hidden;
+        background: linear-gradient(135deg, #0a1628 0%, #0d2050 40%, #1a1040 100%);
+        border: 1px solid rgba(59,130,246,0.15);
+    }
+    .cover-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .cover-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to bottom, transparent 40%, rgba(6,12,28,0.7) 100%);
+    }
+    .cover-grid {
+        position: absolute; inset: 0;
+        background-image: linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+        background-size: 32px 32px;
+    }
+    /* Profile avatar */
+    .profile-av-wrap {
+        position: absolute;
+        bottom: -48px; left: 32px;
+        width: 88px; height: 88px;
+        border-radius: 20px;
+        border: 3px solid rgba(59,130,246,0.4);
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 800;
+        color: white;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        z-index: 2;
+    }
+    .profile-av-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Profile info bar */
+    .profile-infobar {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+        padding: 0 4px;
+        margin-top: 10px;
+    }
+    .profile-name { font-size: 22px; font-weight: 800; color: #f0f6ff; letter-spacing: -0.02em; }
+    .profile-email { font-size: 13px; color: #334155; margin-top: 2px; }
+    .profile-bio { font-size: 13px; color: #64748b; margin-top: 6px; max-width: 480px; }
+
+    .follow-stats { display: flex; gap: 20px; }
+    .follow-stat { text-align: center; }
+    .follow-stat-num { font-size: 18px; font-weight: 800; color: #60a5fa; }
+    .follow-stat-lbl { font-size: 11px; color: #334155; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .profile-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-blue {
+        padding: 9px 20px; background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        color: white; border: none; border-radius: 10px;
+        font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none;
+        transition: all 0.18s; display: inline-block;
+    }
+    .btn-blue:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.35); text-decoration: none; color: white; }
+    .btn-outline {
+        padding: 9px 20px;
+        background: rgba(8,18,40,0.8);
+        border: 1px solid rgba(59,130,246,0.2);
+        color: #60a5fa; border-radius: 10px;
+        font-size: 13px; font-weight: 600; text-decoration: none;
+        transition: all 0.18s; display: inline-block;
+    }
+    .btn-outline:hover { background: rgba(59,130,246,0.1); text-decoration: none; color: #93c5fd; }
+    .btn-danger {
+        padding: 9px 20px; background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.2); color: #f87171;
+        border-radius: 10px; font-size: 13px; font-weight: 600;
+        text-decoration: none; display: inline-block; transition: all 0.18s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.15); text-decoration: none; color: #fca5a5; }
+
+    /* Section card */
+    .section-card {
+        background: rgba(8,18,40,0.8);
+        border: 1px solid rgba(0,80,255,0.1);
+        border-radius: 16px; padding: 24px; margin-bottom: 20px;
+    }
+    .section-head {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 18px;
+    }
+    .section-title { font-size: 14px; font-weight: 800; color: #e2e8f0; }
+    .section-icon { margin-right: 8px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 2px; margin-bottom: 18px;
+        background: rgba(15,30,70,0.4); border-radius: 10px; padding: 4px; }
+    .tab {
+        flex: 1; text-align: center; padding: 8px 12px;
+        border-radius: 8px; font-size: 13px; font-weight: 600;
+        color: #334155; cursor: pointer; border: none; background: none;
+        transition: all 0.18s;
+    }
+    .tab.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Follower list */
+    .person-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 14px; border-radius: 12px;
+        border: 1px solid rgba(0,80,255,0.08);
+        margin-bottom: 8px; text-decoration: none;
+        transition: all 0.15s; background: rgba(15,30,70,0.2);
+    }
+    .person-row:hover { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2); text-decoration: none; }
+    .person-av {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; overflow: hidden;
+    }
+    .person-av img { width: 100%; height: 100%; object-fit: cover; }
+    .person-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+
+    /* Skills */
+    .skills-form { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .skills-input {
+        flex: 1; min-width: 180px;
+        background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(0,80,255,0.14); border-radius: 10px;
+        padding: 10px 14px; color: #e2e8f0; font-size: 13px; outline: none;
+        transition: border-color 0.2s;
+    }
+    .skills-input:focus { border-color: #3b82f6; }
+    .skills-input::placeholder { color: #1e3a5f; }
+    .skills-select {
+        background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(0,80,255,0.14); border-radius: 10px;
+        padding: 10px 14px; color: #e2e8f0; font-size: 13px;
+        outline: none; cursor: pointer;
+    }
+    .btn-add {
+        padding: 10px 18px;
+        background: rgba(16,185,129,0.12); color: #34d399;
+        border: 1px solid rgba(16,185,129,0.2); border-radius: 10px;
+        font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s;
+    }
+    .btn-add:hover { background: rgba(16,185,129,0.2); }
+    .skill-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(59,130,246,0.08);
+        border: 1px solid rgba(59,130,246,0.16);
+        color: #60a5fa; font-size: 12px; font-weight: 600;
+        padding: 6px 14px; border-radius: 20px; margin: 4px;
+    }
+    .skill-del {
+        color: #334155; text-decoration: none; font-size: 14px;
+        line-height: 1; transition: color 0.15s;
+    }
+    .skill-del:hover { color: #f87171; }
+
+    /* Cert card */
+    .cert-card {
+        background: rgba(15,30,70,0.25);
+        border: 1px solid rgba(139,92,246,0.15);
+        border-radius: 14px; padding: 16px 20px; margin-bottom: 10px;
+        display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .cert-title { font-size: 14px; font-weight: 700; color: #a78bfa; }
+    .cert-issuer { font-size: 12px; color: #475569; margin-top: 2px; }
+    .cert-date { font-size: 11px; color: #334155; margin-top: 4px; }
+    .cert-link { font-size: 11px; color: #60a5fa; text-decoration: none; }
+    .cert-link:hover { text-decoration: underline; }
+    .cert-actions { display: flex; gap: 8px; }
+    .cert-act { font-size: 12px; text-decoration: none; padding: 4px 10px; border-radius: 6px; transition: all 0.15s; }
+    .cert-act.edit { color: #fbbf24; background: rgba(251,191,36,0.08); }
+    .cert-act.edit:hover { background: rgba(251,191,36,0.15); text-decoration: none; }
+    .cert-act.del { color: #f87171; background: rgba(239,68,68,0.08); }
+    .cert-act.del:hover { background: rgba(239,68,68,0.15); text-decoration: none; }
+
+    /* Cert form */
+    .cert-form {
+        background: rgba(15,30,70,0.25);
+        border: 1px solid rgba(139,92,246,0.12);
+        border-radius: 14px; padding: 18px; margin-bottom: 16px;
+    }
+    .cert-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .cert-form-grid { grid-template-columns: 1fr; } }
+    .cert-input {
+        background: rgba(15,30,70,0.5);
+        border: 1px solid rgba(139,92,246,0.15);
+        border-radius: 10px; padding: 10px 14px;
+        color: #e2e8f0; font-size: 13px; outline: none; width: 100%;
+        transition: border-color 0.2s;
+    }
+    .cert-input:focus { border-color: #8b5cf6; }
+    .cert-input::placeholder { color: #1e3a5f; }
+    .btn-add-cert {
+        margin-top: 12px; padding: 10px 18px;
+        background: rgba(139,92,246,0.12); color: #a78bfa;
+        border: 1px solid rgba(139,92,246,0.2);
+        border-radius: 10px; font-size: 13px; font-weight: 700;
+        cursor: pointer; transition: all 0.18s;
+    }
+    .btn-add-cert:hover { background: rgba(139,92,246,0.2); }
+
+    /* Posts in profile */
+    .mini-post {
+        background: rgba(15,30,70,0.2);
+        border: 1px solid rgba(0,80,255,0.08);
+        border-radius: 12px; padding: 14px; margin-bottom: 10px;
+    }
+    .mini-post-text { font-size: 13px; color: #64748b; line-height: 1.6; }
+    .mini-post-ts { font-size: 11px; color: #1e3a5f; margin-top: 6px; }
+
+    /* Avatar wrapper fix – prevent clipping */
+    .cover-avatar-wrapper {
+        position: relative;
+        margin-bottom: 60px;
+    }
+    .cover-avatar-wrapper .cover-wrap {
+        height: 180px;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0a1628 0%, #0d2050 40%, #1a1040 100%);
+        border: 1px solid rgba(59,130,246,0.15);
+        position: relative;
+    }
+    .cover-avatar-wrapper .profile-av-wrap {
+        position: absolute;
+        bottom: -48px;
+        left: 32px;
+        width: 88px;
+        height: 88px;
+        border-radius: 20px;
+        border: 3px solid rgba(59,130,246,0.4);
+        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 800;
+        color: white;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        z-index: 2;
+    }
+    .cover-avatar-wrapper .profile-av-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>
+
+<!-- Cover + Avatar (fixed wrapper) -->
+<div class="cover-avatar-wrapper">
+    <div class="cover-wrap">
+        <div class="cover-grid"></div>
+        {% if cover_photo %}<img src="{{ cover_photo }}" alt="Cover">{% endif %}
+        <div class="cover-overlay"></div>
     </div>
-    
-    <!-- Follow/Unfollow Button & Counts -->
-    <div class="mt-4">
-        {% if session.user_id != user.id %}
-        <div class="mb-3">
-            {% if is_following %}
-            <a href="{{ url_for('profile.unfollow', user_id=user.id) }}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm inline-block">Unfollow</a>
+    <div class="profile-av-wrap">
+        {% if user.profile_image %}<img src="{{ user.profile_image }}" alt="{{ user.name }}">
+        {% else %}{{ user.name[0]|upper if user.name else 'U' }}{% endif %}
+    </div>
+</div>
+
+<!-- Info bar -->
+<div class="profile-infobar">
+    <div>
+        <div class="profile-name">{{ user.name }}</div>
+        <div class="profile-email">{{ user.email }}</div>
+        <div class="profile-bio">{{ user.bio or 'No bio yet.' }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:14px;">
+        <div class="follow-stats">
+            <div class="follow-stat">
+                <div class="follow-stat-num">{{ follower_count }}</div>
+                <div class="follow-stat-lbl">Followers</div>
+            </div>
+            <div class="follow-stat">
+                <div class="follow-stat-num">{{ following_count }}</div>
+                <div class="follow-stat-lbl">Following</div>
+            </div>
+            <div class="follow-stat">
+                <div class="follow-stat-num">{{ posts_count }}</div>
+                <div class="follow-stat-lbl">Posts</div>
+            </div>
+        </div>
+        <div class="profile-actions">
+            {% if session.user_id == user.id %}
+            <a href="{{ url_for('profile.edit_profile') }}" class="btn-outline">✏️ Edit Profile</a>
             {% else %}
-            <a href="{{ url_for('profile.follow', user_id=user.id) }}" class="btn-cyber px-4 py-2 rounded-lg text-sm inline-block">Follow</a>
+                {% if is_following %}
+                <a href="{{ url_for('profile.unfollow', user_id=user.id) }}" class="btn-danger">Unfollow</a>
+                {% else %}
+                <a href="{{ url_for('profile.follow', user_id=user.id) }}" class="btn-blue">+ Follow</a>
+                {% endif %}
             {% endif %}
-        </div>
-        {% endif %}
-        
-        <div class="flex gap-4 text-sm">
-            <span class="text-gray-400">👥 {{ follower_count }} Followers</span>
-            <span class="text-gray-400">👤 {{ following_count }} Following</span>
-        </div>
-    </div>
-    
-    {% if session.user_id == user.id %}
-    <div class="mt-4 flex gap-3">
-        <a href="{{ url_for('profile.edit_profile') }}" class="btn-cyber text-white px-4 py-2 rounded inline-block">Edit Profile</a>
-    </div>
-    {% endif %}
-    
-    <!-- Followers and Following Lists with Tabs -->
-    <div class="mt-6">
-        <div class="flex gap-6 border-b border-gray-700 pb-2 mb-4">
-            <button onclick="showTab('followers')" id="followersTabBtn" class="text-cyan-400 font-semibold border-b-2 border-cyan-400 pb-2">Followers ({{ follower_count }})</button>
-            <button onclick="showTab('following')" id="followingTabBtn" class="text-gray-400 font-semibold pb-2">Following ({{ following_count }})</button>
-        </div>
-        
-        <!-- Followers List -->
-        <div id="followersList" class="space-y-3">
-            {% for follower in followers %}
-            <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition">
-                {% if follower.profile_image %}
-                <img src="{{ follower.profile_image }}" alt="{{ follower.name }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                {% else %}
-                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0071e3, #005bb5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
-                    {{ follower.name[0]|upper }}
-                </div>
-                {% endif %}
-                <a href="{{ url_for('profile.view_profile', user_id=follower.id) }}" style="color: white; text-decoration: none; font-weight: 500;">
-                    {{ follower.name }}
-                </a>
-            </div>
-            {% else %}
-            <p class="text-gray-500 text-center py-4">No followers yet</p>
-            {% endfor %}
-        </div>
-        
-        <!-- Following List -->
-        <div id="followingList" style="display: none;" class="space-y-3">
-            {% for follow in following %}
-            <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition">
-                {% if follow.profile_image %}
-                <img src="{{ follow.profile_image }}" alt="{{ follow.name }}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                {% else %}
-                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0071e3, #005bb5); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
-                    {{ follow.name[0]|upper }}
-                </div>
-                {% endif %}
-                <a href="{{ url_for('profile.view_profile', user_id=follow.id) }}" style="color: white; text-decoration: none; font-weight: 500;">
-                    {{ follow.name }}
-                </a>
-            </div>
-            {% else %}
-            <p class="text-gray-500 text-center py-4">Not following anyone yet</p>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- Skills Section -->
-    <div class="mt-8">
-        <h3 class="text-xl font-bold mb-3 text-cyan-400">🛡️ Cybersecurity Skills</h3>
-        
-        {% if session.user_id == user.id %}
-        <form method="POST" action="{{ url_for('profile.add_skill') }}" class="mb-4" onsubmit="return validateSkillForm(event)">
-            <div class="flex flex-col sm:flex-row gap-2">
-                <input type="text" name="skill_name" id="skill_name" placeholder="Enter skill (e.g., Python, Networking, Penetration Testing)" class="flex-1 p-3 rounded bg-gray-800 border border-cyan-500/30 text-white text-base" style="min-width: 200px;">
-                <select name="level" class="p-3 rounded bg-gray-800 border border-cyan-500/30 text-white">
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                    <option value="Expert">Expert</option>
-                </select>
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded transition whitespace-nowrap">Add Skill</button>
-            </div>
-        </form>
-        {% endif %}
-        
-        {% if user.skills and user.skills|length > 0 %}
-        <div class="flex flex-wrap gap-2">
-            {% for skill in user.skills %}
-            <div class="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full flex items-center gap-2 border border-cyan-500/30">
-                <span>{{ skill.skill_name }} ({{ skill.level }})</span>
-                {% if session.user_id == user.id %}
-                <a href="{{ url_for('profile.delete_skill', skill_id=skill.id) }}" class="text-red-400 hover:text-red-600 text-lg leading-none" onclick="return confirm('Remove this skill?')">&times;</a>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-gray-500">No skills added yet. Add your first skill above!</p>
-        {% endif %}
-    </div>
-    
-    <!-- Certifications Section -->
-    <div class="mt-8">
-        <h3 class="text-xl font-bold mb-3 text-purple-400">🎓 Certifications</h3>
-        <!-- DEBUG: Skills data = {{ user.skills }} -->
-        <!-- DEBUG: Skills length = {{ user.skills|length }} -->
-        {% if session.user_id == user.id %}
-        <form method="POST" action="{{ url_for('profile.add_certification') }}" class="mb-4 p-4 glass-card rounded-lg">
-            <div class="grid md:grid-cols-2 gap-3">
-                <input type="text" name="title" placeholder="Certification Title (e.g., CEH)" required class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
-                <input type="text" name="issuer" placeholder="Issuer (e.g., EC-Council)" required class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
-                <input type="date" name="date_earned" class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
-                <input type="url" name="credential_url" placeholder="Credential URL (optional)" class="p-2 rounded bg-gray-800 border border-purple-500/30 text-white">
-            </div>
-            <button type="submit" class="mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition">+ Add Certification</button>
-        </form>
-        {% endif %}
-        
-        <div class="space-y-3">
-            {% for cert in user.certifications %}
-            <div class="glass-card rounded-lg p-4 border border-purple-500/30">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <div class="font-bold text-purple-400">{{ cert.title }}</div>
-                        <div class="text-sm text-gray-400">{{ cert.issuer }}</div>
-                        {% if cert.date_earned %}
-                        <div class="text-xs text-gray-500 mt-1">Earned: {{ cert.date_earned }}</div>
-                        {% endif %}
-                        {% if cert.credential_url %}
-                        <a href="{{ cert.credential_url }}" target="_blank" class="text-xs text-cyan-400 hover:underline">Verify Credential →</a>
-                        {% endif %}
-                    </div>
-                    {% if session.user_id == user.id %}
-                    <div class="flex gap-2">
-                        <a href="{{ url_for('profile.edit_certification', cert_id=cert.id) }}" class="text-yellow-400 hover:text-yellow-300 text-sm">✏️ Edit</a>
-                        <a href="{{ url_for('profile.delete_certification', cert_id=cert.id) }}" class="text-red-500 hover:text-red-700 text-sm" onclick="return confirm('Remove this certification?')">🗑️</a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% else %}
-            <p class="text-gray-500">No certifications added yet.</p>
-            {% endfor %}
         </div>
     </div>
 </div>
 
+<!-- Followers / Following tabs -->
+<div class="section-card">
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('followers', this)">👥 Followers ({{ follower_count }})</button>
+        <button class="tab" onclick="switchTab('following', this)">👤 Following ({{ following_count }})</button>
+    </div>
+    <div class="tab-panel active" id="tab-followers">
+        {% for f in followers %}
+        <a href="{{ url_for('profile.view_profile', user_id=f.id) }}" class="person-row">
+            <div class="person-av">
+                {% if f.profile_image %}<img src="{{ f.profile_image }}">
+                {% else %}{{ f.name[0]|upper }}{% endif %}
+            </div>
+            <span class="person-name">{{ f.name }}</span>
+        </a>
+        {% else %}<p style="color:#334155;font-size:13px;text-align:center;padding:20px;">No followers yet.</p>{% endfor %}
+    </div>
+    <div class="tab-panel" id="tab-following">
+        {% for f in following %}
+        <a href="{{ url_for('profile.view_profile', user_id=f.id) }}" class="person-row">
+            <div class="person-av">
+                {% if f.profile_image %}<img src="{{ f.profile_image }}">
+                {% else %}{{ f.name[0]|upper }}{% endif %}
+            </div>
+            <span class="person-name">{{ f.name }}</span>
+        </a>
+        {% else %}<p style="color:#334155;font-size:13px;text-align:center;padding:20px;">Not following anyone yet.</p>{% endfor %}
+    </div>
+</div>
+
+<!-- Skills -->
+<div class="section-card">
+    <div class="section-head">
+        <span class="section-title"><span class="section-icon">🛡️</span> Cybersecurity Skills</span>
+    </div>
+    {% if session.user_id == user.id %}
+    <form method="POST" action="{{ url_for('profile.add_skill') }}" class="skills-form" onsubmit="return !!document.getElementById('sname').value.trim()">
+        <input type="text" id="sname" name="skill_name" class="skills-input" placeholder="e.g. Penetration Testing, Python, Wireshark…" required>
+        <select name="level" class="skills-select">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+            <option>Expert</option>
+        </select>
+        <button type="submit" class="btn-add">+ Add</button>
+    </form>
+    {% endif %}
+    <div>
+        {% for s in user.skills %}
+        <span class="skill-chip">
+            {{ s.skill_name }} <span style="color:#334155;font-size:10px;">({{ s.level }})</span>
+            {% if session.user_id == user.id %}
+            <a href="{{ url_for('profile.delete_skill', skill_id=s.id) }}" class="skill-del" onclick="return confirm('Remove skill?')" title="Remove">×</a>
+            {% endif %}
+        </span>
+        {% else %}<p style="color:#334155;font-size:13px;">No skills added yet.</p>{% endfor %}
+    </div>
+</div>
+
+<!-- Certifications -->
+<div class="section-card">
+    <div class="section-head">
+        <span class="section-title"><span class="section-icon">🎓</span> Certifications</span>
+    </div>
+    {% if session.user_id == user.id %}
+    <div class="cert-form">
+        <form method="POST" action="{{ url_for('profile.add_certification') }}">
+            <div class="cert-form-grid">
+                <input type="text" name="title" class="cert-input" placeholder="Certification title (e.g. CEH)" required>
+                <input type="text" name="issuer" class="cert-input" placeholder="Issuer (e.g. EC-Council)" required>
+                <input type="date" name="date_earned" class="cert-input">
+                <input type="url" name="credential_url" class="cert-input" placeholder="Credential URL (optional)">
+            </div>
+            <button type="submit" class="btn-add-cert">+ Add Certification</button>
+        </form>
+    </div>
+    {% endif %}
+    {% for c in user.certifications %}
+    <div class="cert-card">
+        <div>
+            <div class="cert-title">{{ c.title }}</div>
+            <div class="cert-issuer">{{ c.issuer }}</div>
+            {% if c.date_earned %}<div class="cert-date">Earned: {{ c.date_earned }}</div>{% endif %}
+            {% if c.credential_url %}<a href="{{ c.credential_url }}" target="_blank" class="cert-link">Verify credential →</a>{% endif %}
+        </div>
+        {% if session.user_id == user.id %}
+        <div class="cert-actions">
+            <a href="{{ url_for('profile.edit_certification', cert_id=c.id) }}" class="cert-act edit">✏️ Edit</a>
+            <a href="{{ url_for('profile.delete_certification', cert_id=c.id) }}" class="cert-act del" onclick="return confirm('Remove?')">🗑️</a>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}<p style="color:#334155;font-size:13px;">No certifications added yet.</p>{% endfor %}
+</div>
+
+<!-- Posts -->
+<div class="section-card">
+    <div class="section-head"><span class="section-title">📝 Posts</span></div>
+    {% for p in user_posts %}
+    <div class="mini-post">
+        <p class="mini-post-text">{{ p.content }}</p>
+        <div class="mini-post-ts">{{ p.created_at }}</div>
+    </div>
+    {% else %}<p style="color:#334155;font-size:13px;">No posts yet.</p>{% endfor %}
+</div>
+
 <script>
-    function showTab(tab) {
-        const followersList = document.getElementById('followersList');
-        const followingList = document.getElementById('followingList');
-        const followersBtn = document.getElementById('followersTabBtn');
-        const followingBtn = document.getElementById('followingTabBtn');
-        
-        if (tab === 'followers') {
-            followersList.style.display = 'block';
-            followingList.style.display = 'none';
-            followersBtn.classList.add('text-cyan-400', 'border-b-2', 'border-cyan-400');
-            followersBtn.classList.remove('text-gray-400');
-            followingBtn.classList.remove('text-cyan-400', 'border-b-2', 'border-cyan-400');
-            followingBtn.classList.add('text-gray-400');
-        } else {
-            followersList.style.display = 'none';
-            followingList.style.display = 'block';
-            followingBtn.classList.add('text-cyan-400', 'border-b-2', 'border-cyan-400');
-            followingBtn.classList.remove('text-gray-400');
-            followersBtn.classList.remove('text-cyan-400', 'border-b-2', 'border-cyan-400');
-            followersBtn.classList.add('text-gray-400');
-        }
-    }
-    
-    function validateSkillForm(event) {
-        var skillName = document.getElementById('skill_name').value.trim();
-        if (skillName === '') {
-            event.preventDefault();
-            alert('Please enter a skill name');
-            return false;
-        }
-        return true;
-    }
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+}
 </script>
 {% endblock %}
