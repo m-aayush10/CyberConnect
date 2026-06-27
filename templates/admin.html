@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 cyber-text">👑 Admin Dashboard</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Users Section -->
+        <div class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-cyan-400 mb-4">👥 Users ({{ users|length }})</h2>
+            <div class="overflow-y-auto max-h-96">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-cyan-500/20">
+                            <th class="py-2">Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr class="border-b border-cyan-500/10 hover:bg-cyan-500/5">
+                            <td class="py-2">{{ u.name }}</td>
+                            <td class="py-2">{{ u.email }}</td>
+                            <td class="py-2">
+                                <span class="px-2 py-1 rounded-full text-xs {% if u.role == 'admin' %}bg-cyan-500/20 text-cyan-400{% else %}bg-gray-700 text-gray-300{% endif %}">
+                                    {{ u.role }}
+                                </span>
+                            </td>
+                            <td class="py-2">
+                                {% if u.role != 'admin' %}
+                                <a href="{{ url_for('admin.delete_user', user_id=u.id) }}" class="text-red-400 hover:text-red-300 text-xs" onclick="return confirm('Delete this user?')">🗑️</a>
+                                {% else %}
+                                <span class="text-gray-500 text-xs">protected</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Posts Section -->
+        <div class="glass-card rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-purple-400 mb-4">📝 All Posts ({{ posts|length }})</h2>
+            <div class="overflow-y-auto max-h-96">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-purple-500/20">
+                            <th class="py-2">Author</th>
+                            <th>Content</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in posts %}
+                        <tr class="border-b border-purple-500/10 hover:bg-purple-500/5">
+                            <td class="py-2">{{ p.author }}</td>
+                            <td class="py-2 max-w-xs truncate">{{ p.content }}</td>
+                            <td class="py-2">{{ p.created_at }}</td>
+                            <td class="py-2">
+                                <a href="{{ url_for('admin.delete_post', post_id=p.id) }}" class="text-red-400 hover:text-red-300 text-xs" onclick="return confirm('Delete this post?')">🗑️</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

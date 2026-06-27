@@ -364,3 +364,55 @@ def get_following(user_id):
             'profile_image': row[2]
         })
     return following
+
+# ============================================================
+#  ADMIN FUNCTIONS
+# ============================================================
+
+def get_all_users():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC")
+    rows = cur.fetchall()
+    cur.close()
+    users = []
+    for row in rows:
+        users.append({
+            'id': row[0],
+            'name': row[1],
+            'email': row[2],
+            'role': row[3],
+            'created_at': row[4]
+        })
+    return users
+
+def get_all_posts():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT posts.id, posts.content, posts.created_at, users.name as author
+        FROM posts
+        JOIN users ON posts.user_id = users.id
+        ORDER BY posts.created_at DESC
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    posts = []
+    for row in rows:
+        posts.append({
+            'id': row[0],
+            'content': row[1],
+            'created_at': row[2],
+            'author': row[3]
+        })
+    return posts
+
+def delete_user(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    mysql.connection.commit()
+    cur.close()
+
+def delete_post_by_admin(post_id):
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM posts WHERE id = %s", (post_id,))
+    mysql.connection.commit()
+    cur.close()
