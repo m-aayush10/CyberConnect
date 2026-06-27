@@ -416,3 +416,41 @@ def delete_post_by_admin(post_id):
     cur.execute("DELETE FROM posts WHERE id = %s", (post_id,))
     mysql.connection.commit()
     cur.close()
+
+# SELF-DELETE ACCOUNT (Complete User CRUD)
+def delete_user_by_id(user_id):
+    """Delete a user and ALL their related data"""
+    cur = mysql.connection.cursor()
+    
+    cur.execute("DELETE FROM comments WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM likes WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM followers WHERE follower_id = %s OR followed_id = %s", (user_id, user_id))
+    cur.execute("DELETE FROM certifications WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM skills WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM posts WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    
+    mysql.connection.commit()
+    cur.close()
+
+# EDIT COMMENT 
+def get_comment_by_id(comment_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, user_id, post_id, content, created_at FROM comments WHERE id = %s", (comment_id,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return {
+            'id': row[0],
+            'user_id': row[1],
+            'post_id': row[2],
+            'content': row[3],
+            'created_at': row[4]
+        }
+    return None
+
+def update_comment(comment_id, content):
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE comments SET content = %s WHERE id = %s", (content, comment_id))
+    mysql.connection.commit()
+    cur.close()

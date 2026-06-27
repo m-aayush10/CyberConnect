@@ -188,6 +188,36 @@ def add_comment(post_id):
     
     return redirect(url_for('posts.feed'))
 
+# ============================================================
+# EDIT COMMENT (Complete Comments CRUD)
+# ============================================================
+@posts_bp.route('/edit_comment/<int:comment_id>', methods=['GET', 'POST'])
+def edit_comment(comment_id):
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    from models import get_comment_by_id, update_comment
+    
+    comment = get_comment_by_id(comment_id)
+    if not comment:
+        flash('Comment not found', 'danger')
+        return redirect(url_for('posts.feed'))
+    
+    if comment['user_id'] != session['user_id']:
+        flash('You can only edit your own comments', 'danger')
+        return redirect(url_for('posts.feed'))
+    
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            update_comment(comment_id, content)
+            flash('Comment updated!', 'success')
+        else:
+            flash('Comment cannot be empty', 'danger')
+        return redirect(url_for('posts.feed'))
+    
+    return render_template('edit_comment.html', comment=comment)
+
 @posts_bp.route('/delete_comment/<int:comment_id>')
 def delete_comment(comment_id):
     if 'user_id' not in session:

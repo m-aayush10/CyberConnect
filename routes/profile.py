@@ -91,7 +91,6 @@ def edit_skill(skill_id):
         flash('Skill not found', 'danger')
         return redirect(url_for('profile.view_profile', user_id=session['user_id']))
     
-    # Check if user owns this skill
     if skill['user_id'] != session['user_id']:
         flash('You can only edit your own skills', 'danger')
         return redirect(url_for('profile.view_profile', user_id=session['user_id']))
@@ -137,7 +136,6 @@ def edit_certification(cert_id):
         flash('Certification not found', 'danger')
         return redirect(url_for('profile.view_profile', user_id=session['user_id']))
     
-    # Check if user owns this certification
     if cert['user_id'] != session['user_id']:
         flash('You can only edit your own certifications', 'danger')
         return redirect(url_for('profile.view_profile', user_id=session['user_id']))
@@ -244,9 +242,23 @@ def follow(user_id):
 @profile_bp.route('/unfollow/<int:user_id>', methods=['POST'])
 def unfollow(user_id):
     if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
+        return jsonify({'error': 'Not logged in'}), 401
     
     from models import unfollow_user
     unfollow_user(session['user_id'], user_id)
-    flash('User unfollowed', 'success')
-    return redirect(url_for('profile.view_profile', user_id=session['user_id']))
+    return jsonify({'success': True, 'action': 'unfollowed'})
+
+# SELF-DELETE ACCOUNT (Complete User CRUD)
+@profile_bp.route('/delete_account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    from models import delete_user_by_id
+    
+    user_id = session['user_id']
+    delete_user_by_id(user_id)
+    
+    session.clear()
+    flash('Your account has been deleted.', 'info')
+    return redirect(url_for('index'))

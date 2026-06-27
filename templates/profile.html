@@ -414,6 +414,32 @@
     {% else %}<p style="color:#334155;font-size:13px;">No posts yet.</p>{% endfor %}
 </div>
 
+<!-- ============================================================ -->
+<!-- DELETE ACCOUNT BUTTON (NEW) -->
+<!-- ============================================================ -->
+{% if session.user_id == user.id %}
+<div class="mt-6">
+    <button onclick="confirmDelete()" class="bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm inline-block">
+        🗑️ Delete Account
+    </button>
+</div>
+
+<script>
+function confirmDelete() {
+    if (confirm('⚠️ Are you sure you want to permanently delete your account? This cannot be undone!')) {
+        if (confirm('All your posts, comments, skills, certifications, and followers will be deleted. Continue?')) {
+            fetch("{{ url_for('profile.delete_account') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => {
+                window.location.href = "{{ url_for('index') }}";
+            });
+        }
+    }
+}
+</script>
+{% endif %}
+
 <script>
 function switchTab(name, btn) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

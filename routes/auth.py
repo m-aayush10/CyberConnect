@@ -13,7 +13,7 @@ def login():
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             session['user_id'] = user['id']
             session['user_name'] = user['name']
-            session['user_role'] = user['role'] 
+            session['user_role'] = user.get('role', 'user')
             flash('Login successful!', 'success')
             return redirect(url_for('dashboard'))
         else:
