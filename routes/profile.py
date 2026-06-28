@@ -12,6 +12,24 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# SEARCH USERS
+@profile_bp.route('/search')
+def search_users():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login'))
+    
+    query = request.args.get('q', '').strip()
+    results = []
+    if query:
+        from models import search_users, is_following
+        raw_results = search_users(query, session['user_id'])
+        for user in raw_results:
+            user['following'] = is_following(session['user_id'], user['id'])
+            results.append(user)
+    
+    return render_template('search_results.html', query=query, results=results)
+
+# VIEW PROFILE
 @profile_bp.route('/<int:user_id>')
 def view_profile(user_id):
     if 'user_id' not in session:
@@ -226,26 +244,49 @@ def upload_cover():
     return redirect(url_for('profile.edit_profile'))
 
 # AJAX Follow/Unfollow Routes
-@profile_bp.route('/follow/<int:user_id>', methods=['POST'])
+@profile_bp.route('/follow/<int:user_id>', methods=['GET', 'POST'])
 def follow(user_id):
     if 'user_id' not in session:
+        if request.method == 'GET':
+            return redirect(url_for('auth.login'))
         return jsonify({'error': 'Not logged in'}), 401
+    
     if session['user_id'] == user_id:
+        if request.method == 'GET':
+            flash('You cannot follow yourself', 'danger')
+            return redirect(request.referrer or url_for('profile.search_users'))
         return jsonify({'error': 'Cannot follow yourself'}), 400
     
     from models import follow_user
-    if follow_user(session['user_id'], user_id):
+    success = follow_user(session['user_id'], user_id)
+    
+    if request.method == 'GET':
+        if success:
+            flash('User followed!', 'success')
+        else:
+            flash('Already following', 'danger')
+        return redirect(request.referrer or url_for('profile.search_users'))
+    
+    # POST (AJAX) response
+    if success:
         return jsonify({'success': True, 'action': 'followed'})
     else:
         return jsonify({'error': 'Already following'}), 400
 
-@profile_bp.route('/unfollow/<int:user_id>', methods=['POST'])
+@profile_bp.route('/unfollow/<int:user_id>', methods=['GET', 'POST'])
 def unfollow(user_id):
     if 'user_id' not in session:
+        if request.method == 'GET':
+            return redirect(url_for('auth.login'))
         return jsonify({'error': 'Not logged in'}), 401
     
     from models import unfollow_user
     unfollow_user(session['user_id'], user_id)
+    
+    if request.method == 'GET':
+        flash('User unfollowed', 'success')
+        return redirect(request.referrer or url_for('profile.search_users'))
+    
     return jsonify({'success': True, 'action': 'unfollowed'})
 
 # SELF-DELETE ACCOUNT (Complete User CRUD)

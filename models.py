@@ -454,3 +454,23 @@ def update_comment(comment_id, content):
     cur.execute("UPDATE comments SET content = %s WHERE id = %s", (content, comment_id))
     mysql.connection.commit()
     cur.close()
+
+def search_users(query, current_user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT id, name, email, profile_image 
+        FROM users 
+        WHERE (name LIKE %s OR email LIKE %s) AND id != %s
+        ORDER BY name ASC
+    """, (f'%{query}%', f'%{query}%', current_user_id))
+    rows = cur.fetchall()
+    cur.close()
+    results = []
+    for row in rows:
+        results.append({
+            'id': row[0],
+            'name': row[1],
+            'email': row[2],
+            'profile_image': row[3]
+        })
+    return results
