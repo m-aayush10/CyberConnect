@@ -474,3 +474,29 @@ def search_users(query, current_user_id):
             'profile_image': row[3]
         })
     return results
+
+def get_suggested_users(current_user_id, limit=5):
+    """Get users that the current user is not following (excluding self)"""
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT id, name, email, profile_image 
+        FROM users 
+        WHERE id != %s 
+        AND id NOT IN (
+            SELECT followed_id FROM followers WHERE follower_id = %s
+        )
+        ORDER BY RAND()
+        LIMIT %s
+    """, (current_user_id, current_user_id, limit))
+    rows = cur.fetchall()
+    cur.close()
+    
+    suggestions = []
+    for row in rows:
+        suggestions.append({
+            'id': row[0],
+            'name': row[1],
+            'email': row[2],
+            'profile_image': row[3]
+        })
+    return suggestions

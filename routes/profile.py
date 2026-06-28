@@ -20,14 +20,27 @@ def search_users():
     
     query = request.args.get('q', '').strip()
     results = []
+    suggestions = []
+    
     if query:
         from models import search_users, is_following
         raw_results = search_users(query, session['user_id'])
         for user in raw_results:
             user['following'] = is_following(session['user_id'], user['id'])
             results.append(user)
+        
+        # If no results, get suggestions
+        if not results:
+            from models import get_suggested_users
+            raw_suggestions = get_suggested_users(session['user_id'], 5)
+            for user in raw_suggestions:
+                user['following'] = False  # They are not following these users
+                suggestions.append(user)
     
-    return render_template('search_results.html', query=query, results=results)
+    return render_template('search_results.html', 
+                         query=query, 
+                         results=results, 
+                         suggestions=suggestions)
 
 # VIEW PROFILE
 @profile_bp.route('/<int:user_id>')

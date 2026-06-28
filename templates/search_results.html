@@ -5,12 +5,14 @@
 <div class="max-w-4xl mx-auto">
     <div class="glass-card rounded-2xl p-6">
         <h1 class="text-2xl font-bold mb-2 cyber-text">🔍 Search Results</h1>
+        
         {% if query %}
         <p class="text-gray-400 mb-6">Showing results for: <span class="text-cyan-400">"{{ query }}"</span></p>
         {% else %}
         <p class="text-gray-400 mb-6">Enter a search term above.</p>
         {% endif %}
 
+        <!-- Search Results -->
         {% if results %}
         <div class="space-y-3">
             {% for user in results %}
@@ -43,6 +45,37 @@
                 </div>
             </div>
             {% endfor %}
+        </div>
+        {% elif query and suggestions %}
+        <!-- No exact match, show suggestions -->
+        <div class="mt-4 p-4 bg-cyan-500/5 rounded-xl border border-cyan-500/20">
+            <p class="text-gray-400 mb-4">No exact matches found. <span class="text-cyan-400">People you may know:</span></p>
+            <div class="space-y-3">
+                {% for user in suggestions %}
+                <div class="flex items-center justify-between p-3 bg-gray-800/30 rounded-xl border border-gray-700/30">
+                    <div class="flex items-center gap-3">
+                        <a href="{{ url_for('profile.view_profile', user_id=user.id) }}">
+                            {% if user.profile_image %}
+                            <img src="{{ user.profile_image }}" class="w-10 h-10 rounded-full object-cover">
+                            {% else %}
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
+                                {{ user.name[0]|upper }}
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div>
+                            <a href="{{ url_for('profile.view_profile', user_id=user.id) }}" class="text-white hover:text-cyan-400 font-semibold">
+                                {{ user.name }}
+                            </a>
+                            <div class="text-xs text-gray-500">{{ user.email }}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('profile.follow', user_id=user.id) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-full text-sm transition">Follow</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% elif query %}
         <p class="text-gray-500 text-center py-8">No users found matching "{{ query }}"</p>
