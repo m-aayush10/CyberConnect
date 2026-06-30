@@ -101,6 +101,99 @@
         text-transform: uppercase; letter-spacing: 0.08em;
         margin-bottom: 14px;
     }
+
+    /* People You May Know */
+    .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+    .suggestion-card {
+        background: rgba(8,18,40,0.6);
+        border: 1px solid rgba(0,80,255,0.08);
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s;
+    }
+    .suggestion-card:hover {
+        background: rgba(8,18,40,0.85);
+        border-color: rgba(0,212,255,0.2);
+    }
+    .suggestion-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .suggestion-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    .suggestion-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+        color: white;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+    }
+    .suggestion-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #e2e8f0;
+        text-decoration: none;
+    }
+    .suggestion-name:hover {
+        color: #60a5fa;
+        text-decoration: underline;
+    }
+    .suggestion-email {
+        font-size: 11px;
+        color: #475569;
+    }
+    .btn-follow-suggest {
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.18s;
+        white-space: nowrap;
+    }
+    .btn-follow-suggest.follow {
+        background: rgba(59,130,246,0.12);
+        color: #60a5fa;
+        border: 1px solid rgba(59,130,246,0.25);
+    }
+    .btn-follow-suggest.follow:hover {
+        background: rgba(59,130,246,0.2);
+    }
+    .btn-follow-suggest.unfollow {
+        background: rgba(71,85,105,0.12);
+        color: #64748b;
+        border: 1px solid rgba(71,85,105,0.2);
+    }
+    .btn-follow-suggest.unfollow:hover {
+        background: rgba(239,68,68,0.1);
+        color: #f87171;
+        border-color: rgba(239,68,68,0.2);
+    }
+    .suggestions-empty {
+        text-align: center;
+        padding: 20px;
+        color: #475569;
+        font-size: 14px;
+    }
 </style>
 
 <div class="dash-header">
@@ -158,6 +251,43 @@
             <div class="quick-card-desc">Share a threat intel or write-up</div>
         </div>
     </a>
+</div>
+
+<!-- ===== PEOPLE YOU MAY KNOW ===== -->
+<div style="margin-top: 32px;">
+    <div class="section-title" style="color: #00d4ff; font-size: 16px;">👥 People You May Know</div>
+    <div class="suggestions-grid">
+        {% if suggestions and suggestions|length > 0 %}
+            {% for user in suggestions %}
+            <div class="suggestion-card">
+                <div class="suggestion-user">
+                    <a href="{{ url_for('profile.view_profile', user_id=user.id) }}">
+                        {% if user.profile_image %}
+                        <img src="{{ user.profile_image }}" class="suggestion-avatar" alt="{{ user.name }}">
+                        {% else %}
+                        <div class="suggestion-avatar-placeholder">{{ user.name[0]|upper }}</div>
+                        {% endif %}
+                    </a>
+                    <div>
+                        <a href="{{ url_for('profile.view_profile', user_id=user.id) }}" class="suggestion-name">{{ user.name }}</a>
+                        <div class="suggestion-email">{{ user.email }}</div>
+                    </div>
+                </div>
+                <div>
+                    {% if user.following %}
+                    <a href="{{ url_for('profile.unfollow', user_id=user.id) }}" class="btn-follow-suggest unfollow">Unfollow</a>
+                    {% else %}
+                    <a href="{{ url_for('profile.follow', user_id=user.id) }}" class="btn-follow-suggest follow">Follow</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="suggestions-empty">
+                <p>No suggestions available. Follow more users to get recommendations!</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}

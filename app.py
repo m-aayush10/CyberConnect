@@ -37,6 +37,7 @@ def dashboard():
         return redirect(url_for('auth.login'))
     
     from models import get_user_skills, get_user_post_count, get_follower_count
+    from models import get_suggested_users, is_following
     
     user_id = session['user_id']
     skills = get_user_skills(user_id)
@@ -44,10 +45,16 @@ def dashboard():
     post_count = get_user_post_count(user_id)
     connections_count = get_follower_count(user_id)
     
+    # Get "People You May Know" – users you are not following
+    suggestions = get_suggested_users(user_id, limit=5)
+    for user in suggestions:
+        user['following'] = is_following(user_id, user['id'])
+    
     return render_template('dashboard.html', 
                          user_skill_count=skill_count,
                          user_post_count=post_count,
-                         user_connections_count=connections_count)
+                         user_connections_count=connections_count,
+                         suggestions=suggestions)
 
 if __name__ == '__main__':
     app.run(debug=True)
