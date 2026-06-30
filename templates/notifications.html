@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+    <div class="glass-card rounded-2xl p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold cyber-text">🔔 Notifications</h1>
+            <div class="flex gap-3">
+                {% if unread_count > 0 %}
+                <a href="{{ url_for('notifications.mark_all_read') }}" class="text-sm text-cyan-400 hover:text-cyan-300 transition">
+                    Mark all as read
+                </a>
+                {% endif %}
+                <span class="text-sm text-gray-500">{{ unread_count }} unread</span>
+            </div>
+        </div>
+
+        {% if notifications %}
+        <div class="space-y-2">
+            {% for notif in notifications %}
+            <div class="notification-card p-4 rounded-xl transition {% if not notif.is_read %}border-l-4 border-l-cyan-500 bg-cyan-500/5{% else %}opacity-75{% endif %}">
+                <div class="flex items-start gap-3">
+                    <a href="{{ url_for('profile.view_profile', user_id=notif.actor_id) }}">
+                        {% if notif.actor_image %}
+                        <img src="{{ notif.actor_image }}" class="w-10 h-10 rounded-full object-cover">
+                        {% else %}
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {{ notif.actor_name[0]|upper }}
+                        </div>
+                        {% endif %}
+                    </a>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <a href="{{ url_for('profile.view_profile', user_id=notif.actor_id) }}" class="font-semibold text-white hover:text-cyan-400">
+                                    {{ notif.actor_name }}
+                                </a>
+                                <span class="text-gray-400 ml-1">{{ notif.content }}</span>
+                                <div class="text-xs text-gray-500 mt-1">{{ notif.created_at }}</div>
+                            </div>
+                            {% if not notif.is_read %}
+                            <a href="{{ url_for('notifications.mark_read', notification_id=notif.id) }}" class="text-xs text-cyan-400 hover:text-cyan-300 ml-2 flex-shrink-0">Mark read</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="text-6xl mb-4">🔕</div>
+            <h3 class="text-xl font-semibold text-gray-400">No notifications yet</h3>
+            <p class="text-gray-500 mt-2">When someone follows, likes, or comments on your posts, you'll see it here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .notification-card {
+        background: rgba(8,18,40,0.6);
+        border: 1px solid rgba(0,80,255,0.08);
+        transition: all 0.2s;
+    }
+    .notification-card:hover {
+        background: rgba(8,18,40,0.85);
+        border-color: rgba(0,212,255,0.15);
+    }
+</style>
+
+{% endblock %}

@@ -30,8 +30,10 @@ def create_user(name, email, hashed_password):
     except Exception:
         return False
 
-def update_user_profile(user_id, bio=None, profile_image=None):
+def update_user_profile(user_id, name=None, bio=None, profile_image=None):
     cur = mysql.connection.cursor()
+    if name:
+        cur.execute("UPDATE users SET name = %s WHERE id = %s", (name, user_id))
     if bio:
         cur.execute("UPDATE users SET bio = %s WHERE id = %s", (bio, user_id))
     if profile_image:
@@ -500,3 +502,146 @@ def get_suggested_users(current_user_id, limit=5):
             'profile_image': row[3]
         })
     return suggestions
+
+# NOTIFICATIONS FUNCTIONS
+
+
+def create_notification(user_id, actor_id, type, content, post_id=None, comment_id=None):
+    """Create a new notification"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            INSERT INTO notifications (user_id, actor_id, type, content, post_id, comment_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (user_id, actor_id, type, content, post_id, comment_id))
+        mysql.connection.commit()
+        cur.close()
+        return True
+    except Exception as e:
+        print(f"Notification error: {e}")
+        return False
+
+def get_notifications(user_id, limit=10):
+    """Get notifications for a user (most recent first)"""
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT n.*, u.name as actor_name, u.profile_image as actor_image
+        FROM notifications n
+        JOIN users u ON n.actor_id = u.id
+        WHERE n.user_id = %s
+        ORDER BY n.created_at DESC
+        LIMIT %s
+    """, (user_id, limit))
+    rows = cur.fetchall()
+    cur.close()
+    
+    notifications = []
+    for row in rows:
+        notifications.append({
+            'id': row[0],
+            'user_id': row[1],
+            'actor_id': row[2],
+            'type': row[3],
+            'content': row[4],
+            'post_id': row[5],
+            'comment_id': row[6],
+            'is_read': row[7],
+            'created_at': row[8],
+            'actor_name': row[9],
+            'actor_image': row[10]
+        })
+    return notifications
+
+def get_unread_count(user_id):
+    """Get count of unread notifications"""
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM notifications WHERE user_id = %s AND is_read = FALSE", (user_id,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count
+
+def mark_notification_read(notification_id, user_id):
+    """Mark a single notification as read"""
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE notifications SET is_read = TRUE WHERE id = %s AND user_id = %s", (notification_id, user_id))
+    mysql.connection.commit()
+    cur.close()
+
+def mark_all_notifications_read(user_id):
+    """Mark all notifications as read for a user"""
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE notifications SET is_read = TRUE WHERE user_id = %s", (user_id,))
+    mysql.connection.commit()
+    cur.close()
+
+# ============================================================
+# NOTIFICATIONS FUNCTIONS
+# ============================================================
+
+def create_notification(user_id, actor_id, type, content, post_id=None, comment_id=None):
+    """Create a new notification"""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
+            INSERT INTO notifications (user_id, actor_id, type, content, post_id, comment_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (user_id, actor_id, type, content, post_id, comment_id))
+        mysql.connection.commit()
+        cur.close()
+        return True
+    except Exception as e:
+        print(f"Notification error: {e}")
+        return False
+
+def get_notifications(user_id, limit=10):
+    """Get notifications for a user (most recent first)"""
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT n.*, u.name as actor_name, u.profile_image as actor_image
+        FROM notifications n
+        JOIN users u ON n.actor_id = u.id
+        WHERE n.user_id = %s
+        ORDER BY n.created_at DESC
+        LIMIT %s
+    """, (user_id, limit))
+    rows = cur.fetchall()
+    cur.close()
+    
+    notifications = []
+    for row in rows:
+        notifications.append({
+            'id': row[0],
+            'user_id': row[1],
+            'actor_id': row[2],
+            'type': row[3],
+            'content': row[4],
+            'post_id': row[5],
+            'comment_id': row[6],
+            'is_read': row[7],
+            'created_at': row[8],
+            'actor_name': row[9],
+            'actor_image': row[10]
+        })
+    return notifications
+
+def get_unread_count(user_id):
+    """Get count of unread notifications"""
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM notifications WHERE user_id = %s AND is_read = FALSE", (user_id,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count
+
+def mark_notification_read(notification_id, user_id):
+    """Mark a single notification as read"""
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE notifications SET is_read = TRUE WHERE id = %s AND user_id = %s", (notification_id, user_id))
+    mysql.connection.commit()
+    cur.close()
+
+def mark_all_notifications_read(user_id):
+    """Mark all notifications as read for a user"""
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE notifications SET is_read = TRUE WHERE user_id = %s", (user_id,))
+    mysql.connection.commit()
+    cur.close()

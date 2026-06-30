@@ -20,12 +20,14 @@ from routes.profile import profile_bp
 from routes.posts import posts_bp
 from routes.connections import connections_bp
 from routes.admin import admin_bp
+from routes.notifications import notifications_bp
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(posts_bp, url_prefix='/posts')
 app.register_blueprint(connections_bp, url_prefix='/connections')
 app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(notifications_bp, url_prefix='/notifications')
 
 @app.route('/')
 def index():
@@ -38,6 +40,7 @@ def dashboard():
     
     from models import get_user_skills, get_user_post_count, get_follower_count
     from models import get_suggested_users, is_following
+    from models import get_unread_count
     
     user_id = session['user_id']
     skills = get_user_skills(user_id)
@@ -50,11 +53,15 @@ def dashboard():
     for user in suggestions:
         user['following'] = is_following(user_id, user['id'])
     
+    # Get unread notification count
+    unread_count = get_unread_count(user_id)
+    
     return render_template('dashboard.html', 
                          user_skill_count=skill_count,
                          user_post_count=post_count,
                          user_connections_count=connections_count,
-                         suggestions=suggestions)
+                         suggestions=suggestions,
+                         unread_count=unread_count)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -12,7 +12,9 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ============================================================
 # SEARCH USERS
+# ============================================================
 @profile_bp.route('/search')
 def search_users():
     if 'user_id' not in session:
@@ -34,7 +36,7 @@ def search_users():
             from models import get_suggested_users
             raw_suggestions = get_suggested_users(session['user_id'], 5)
             for user in raw_suggestions:
-                user['following'] = False  # They are not following these users
+                user['following'] = False
                 suggestions.append(user)
     
     return render_template('search_results.html', 
@@ -42,7 +44,9 @@ def search_users():
                          results=results, 
                          suggestions=suggestions)
 
+# ============================================================
 # VIEW PROFILE
+# ============================================================
 @profile_bp.route('/<int:user_id>')
 def view_profile(user_id):
     if 'user_id' not in session:
@@ -75,15 +79,31 @@ def view_profile(user_id):
                            user_posts=user_posts,
                            posts_count=len(user_posts))
 
+# ============================================================
+# EDIT PROFILE (includes name editing)
+# ============================================================
 @profile_bp.route('/edit', methods=['GET', 'POST'])
 def edit_profile():
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
+    
     if request.method == 'POST':
+        name = request.form.get('name')
         bio = request.form.get('bio')
-        update_user_profile(session['user_id'], bio=bio)
-        flash('Profile updated', 'success')
+        
+        # Validate name
+        if not name or len(name) < 2:
+            flash('Name must be at least 2 characters.', 'danger')
+            return redirect(url_for('profile.edit_profile'))
+        
+        update_user_profile(session['user_id'], name=name, bio=bio)
+        
+        # Update session name
+        session['user_name'] = name
+        
+        flash('Profile updated!', 'success')
         return redirect(url_for('profile.view_profile', user_id=session['user_id']))
+    
     user = get_user_by_id(session['user_id'])
     return render_template('edit_profile.html', user=user)
 
@@ -256,7 +276,9 @@ def upload_cover():
     
     return redirect(url_for('profile.edit_profile'))
 
-# AJAX Follow/Unfollow Routes
+# ============================================================
+# FOLLOW ROUTE WITH NOTIFICATION
+# ============================================================
 @profile_bp.route('/follow/<int:user_id>', methods=['GET', 'POST'])
 def follow(user_id):
     if 'user_id' not in session:
@@ -270,8 +292,19 @@ def follow(user_id):
             return redirect(request.referrer or url_for('profile.search_users'))
         return jsonify({'error': 'Cannot follow yourself'}), 400
     
-    from models import follow_user
+    from models import follow_user, create_notification
     success = follow_user(session['user_id'], user_id)
+    
+    # Create notification for the followed user
+    if success:
+        actor = session['user_name']
+        content = f"{actor} started following you"
+        create_notification(
+            user_id=user_id,  # The person being followed
+            actor_id=session['user_id'],  # The person who followed
+            type='follow',
+            content=content
+        )
     
     if request.method == 'GET':
         if success:
@@ -280,7 +313,6 @@ def follow(user_id):
             flash('Already following', 'danger')
         return redirect(request.referrer or url_for('profile.search_users'))
     
-    # POST (AJAX) response
     if success:
         return jsonify({'success': True, 'action': 'followed'})
     else:
@@ -302,7 +334,7 @@ def unfollow(user_id):
     
     return jsonify({'success': True, 'action': 'unfollowed'})
 
-# SELF-DELETE ACCOUNT (Complete User CRUD)
+# SELF-DELETE ACCOUNT
 @profile_bp.route('/delete_account', methods=['POST'])
 def delete_account():
     if 'user_id' not in session:

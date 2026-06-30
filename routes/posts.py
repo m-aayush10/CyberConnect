@@ -153,14 +153,37 @@ def delete_post(post_id):
     flash('Post deleted successfully!', 'success')
     return redirect(url_for('posts.feed'))
 
+# ============================================================
+# LIKE ROUTE WITH NOTIFICATION
+# ============================================================
 @posts_bp.route('/like/<int:post_id>', methods=['POST'])
 def like_post(post_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Not logged in'}), 401
     
-    from models import add_like, get_like_count
+    from models import add_like, get_like_count, create_notification
+    
+    # Get post owner
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT user_id FROM posts WHERE id = %s", (post_id,))
+    post_owner = cur.fetchone()
+    cur.close()
+    
     add_like(session['user_id'], post_id)
     like_count = get_like_count(post_id)
+    
+    # Create notification for post owner (if not liking own post)
+    if post_owner and post_owner[0] != session['user_id']:
+        actor = session['user_name']
+        content = f"{actor} liked your post"
+        create_notification(
+            user_id=post_owner[0],
+            actor_id=session['user_id'],
+            type='like',
+            content=content,
+            post_id=post_id
+        )
+    
     return jsonify({'success': True, 'action': 'liked', 'like_count': like_count})
 
 @posts_bp.route('/unlike/<int:post_id>', methods=['POST'])
@@ -173,6 +196,9 @@ def unlike_post(post_id):
     like_count = get_like_count(post_id)
     return jsonify({'success': True, 'action': 'unliked', 'like_count': like_count})
 
+# ============================================================
+# COMMENT ROUTE WITH NOTIFICATION
+# ============================================================
 @posts_bp.route('/comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
     if 'user_id' not in session:
@@ -180,8 +206,35 @@ def add_comment(post_id):
     
     content = request.form.get('content')
     if content:
-        from models import add_comment
+        from models import add_comment, create_notification
+        
+        # Get post owner
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT user_id FROM posts WHERE id = %s", (post_id,))
+        post_owner = cur.fetchone()
+        cur.close()
+        
         add_comment(session['user_id'], post_id, content)
+        
+        # Get comment id
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT MAX(id) FROM comments WHERE post_id = %s AND user_id = %s", (post_id, session['user_id']))
+        comment_id = cur.fetchone()[0]
+        cur.close()
+        
+        # Create notification for post owner (if not commenting on own post)
+        if post_owner and post_owner[0] != session['user_id']:
+            actor = session['user_name']
+            notif_content = f"{actor} commented on your post: {content[:50]}..."
+            create_notification(
+                user_id=post_owner[0],
+                actor_id=session['user_id'],
+                type='comment',
+                content=notif_content,
+                post_id=post_id,
+                comment_id=comment_id
+            )
+        
         flash('Comment added!', 'success')
     else:
         flash('Comment cannot be empty', 'danger')

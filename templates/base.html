@@ -52,40 +52,6 @@
             margin-top: 2px;
         }
 
-        .cc-user-chip {
-            margin: 14px 14px;
-            padding: 12px 14px;
-            background: rgba(0,212,255,0.04);
-            border: 1px solid rgba(0,212,255,0.08);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-        }
-        .cc-user-chip:hover { background: rgba(0,212,255,0.08); }
-        .cc-user-avatar {
-            width: 36px; height: 36px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 15px;
-            color: white;
-            flex-shrink: 0;
-        }
-        .cc-user-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-        .cc-user-role {
-            font-size: 11px;
-            color: #3d5a7a;
-        }
-
         /* ── SEARCH BOX ── */
         .cc-search {
             padding: 8px 14px;
@@ -134,8 +100,42 @@
             background: rgba(0, 212, 255, 0.16);
             border-color: rgba(0, 212, 255, 0.3);
         }
+
+        .cc-user-chip {
+            margin: 14px 14px;
+            padding: 12px 14px;
+            background: rgba(0,212,255,0.04);
+            border: 1px solid rgba(0,212,255,0.08);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .cc-user-chip:hover { background: rgba(0,212,255,0.08); }
+        .cc-user-avatar {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .cc-user-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .cc-user-role {
+            font-size: 11px;
+            color: #3d5a7a;
+        }
+
         .cc-nav { padding: 8px 12px; flex: 1; }
-        
         .cc-nav-label {
             font-size: 10px;
             font-weight: 700;
@@ -286,7 +286,11 @@
         <div class="cc-logo-sub">Security Network</div>
     </div>
 
+    <!-- ============================================================ -->
+    <!--  ONLY SHOW LOGGED-IN CONTENT WHEN session.user_id EXISTS      -->
+    <!-- ============================================================ -->
     {% if session.user_id %}
+
     <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="cc-user-chip">
         <div class="cc-user-avatar">{{ session.user_name[0]|upper if session.user_name else 'U' }}</div>
         <div>
@@ -295,7 +299,7 @@
         </div>
     </a>
 
-    <!-- ===== SEARCH BOX (only shown when logged in) ===== -->
+    <!-- SEARCH BOX -->
     <div class="cc-search">
         <form action="{{ url_for('profile.search_users') }}" method="GET">
             <input type="text" name="q" placeholder="Search users..." value="{{ request.args.get('q', '') }}">
@@ -319,6 +323,20 @@
         </a>
 
         <div class="cc-nav-label" style="margin-top:12px;">Account</div>
+
+        <!-- ============================================================ -->
+        <!--  NOTIFICATION BELL (ADDED HERE)                               -->
+        <!-- ============================================================ -->
+        <a href="{{ url_for('notifications.index') }}" class="cc-nav-link" id="notification-bell">
+            <svg class="cc-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            Notifications
+            <span id="notification-count" class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                {{ unread_count|default(0) }}
+            </span>
+        </a>
+
         <a href="{{ url_for('profile.edit_profile') }}" class="cc-nav-link">
             <svg class="cc-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
             Settings
@@ -332,7 +350,6 @@
             Admin Panel
         </a>
         {% endif %}
-
     </nav>
 
     <div class="cc-sidebar-footer">
@@ -341,9 +358,12 @@
             Sign Out
         </a>
     </div>
+
+    <!-- ============================================================ -->
+    <!--  ELSE: SHOW ONLY LOGIN/REGISTER LINKS WHEN NOT LOGGED IN      -->
+    <!-- ============================================================ -->
     {% else %}
-    <!-- When not logged in, show only login/register links in the nav -->
-    <nav class="cc-nav">
+    <nav class="cc-nav" style="padding-top: 20px;">
         <a href="{{ url_for('auth.login') }}" class="cc-nav-link">
             <svg class="cc-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
             Login
@@ -354,6 +374,7 @@
         </a>
     </nav>
     {% endif %}
+
 </aside>
 
 <main class="cc-main">
@@ -382,6 +403,30 @@
         const fc = document.getElementById('flashContainer');
         if (fc) fc.style.opacity = '0', fc.style.transition = 'opacity 0.4s', setTimeout(() => fc.remove(), 400);
     }, 3000);
+
+    // ============================================================
+    //  NOTIFICATION COUNT UPDATER
+    // ============================================================
+    function updateNotificationCount() {
+        fetch('/notifications/unread_count')
+            .then(response => response.json())
+            .then(data => {
+                const countEl = document.getElementById('notification-count');
+                if (countEl) {
+                    const count = data.count || 0;
+                    countEl.textContent = count;
+                    if (count === 0) {
+                        countEl.style.display = 'none';
+                    } else {
+                        countEl.style.display = 'inline-block';
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching notification count:', error));
+    }
+
+    // Update count every 30 seconds
+    setInterval(updateNotificationCount, 30000);
 </script>
 </body>
 </html>
