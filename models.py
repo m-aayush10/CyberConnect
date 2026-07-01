@@ -645,3 +645,89 @@ def mark_all_notifications_read(user_id):
     cur.execute("UPDATE notifications SET is_read = TRUE WHERE user_id = %s", (user_id,))
     mysql.connection.commit()
     cur.close()
+
+# ============================================================
+# REPOST FUNCTIONS
+# ============================================================
+
+def create_repost(user_id, original_post_id, content=None):
+    """Create a repost of an existing post"""
+    try:
+        cur = mysql.connection.cursor()
+        # Check if already reposted
+        cur.execute("SELECT id FROM reposts WHERE user_id = %s AND original_post_id = %s", (user_id, original_post_id))
+        if cur.fetchone():
+            cur.close()
+            return False
+        
+        cur.execute("""
+            INSERT INTO reposts (user_id, original_post_id, content)
+            VALUES (%s, %s, %s)
+        """, (user_id, original_post_id, content))
+        mysql.connection.commit()
+        cur.close()
+        
+        # Create notification for post owner
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT user_id FROM posts WHERE id = %s", (original_post_id,))
+        post_owner = cur.fetchone()
+        cur.close()
+        
+        if post_owner and post_owner[0] != user_id:
+            from flask import session
+            actor_name = session.get('user_name', 'Someone')
+            create_notification(
+                user_id=post_owner[0],
+                actor_id=user_id,
+                type='repost',
+                content=f"{actor_name} reposted your post",
+                post_id=original_post_id
+            )
+        
+        return True
+    except Exception as e:
+        print(f"Repost error: {e}")
+        return False
+
+def get_repost_count(post_id):
+    """Get number of reposts for a post"""
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT COUNT(*) FROM reposts WHERE original_post_id = %s", (post_id,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count
+
+def user_has_reposted(user_id, post_id):
+    """Check if user has reposted a post"""
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id FROM reposts WHERE user_id = %s AND original_post_id = %s", (user_id, post_id))
+    result = cur.fetchone()
+    cur.close()
+    return result is not None
+
+def get_reposts_by_user(user_id):
+    """Get all reposts by a user"""
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT r.*, p.content as original_content, p.user_id as original_author_id, u.name as original_author_name
+        FROM reposts r
+        JOIN posts p ON r.original_post_id = p.id
+        JOIN users u ON p.user_id = u.id
+        WHERE r.user_id = %s
+        ORDER BY r.created_at DESC
+    """, (user_id,))
+    rows = cur.fetchall()
+    cur.close()
+    reposts = []
+    for row in rows:
+        reposts.append({
+            'id': row[0],
+            'user_id': row[1],
+            'original_post_id': row[2],
+            'content': row[3],
+            'created_at': row[4],
+            'original_content': row[5],
+            'original_author_id': row[6],
+            'original_author_name': row[7]
+        })
+    return reposts

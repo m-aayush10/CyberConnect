@@ -3,6 +3,7 @@ from db import mysql
 import os
 import time
 from werkzeug.utils import secure_filename
+from models import get_repost_count, user_has_reposted, create_repost
 
 posts_bp = Blueprint('posts', __name__)
 
@@ -54,6 +55,13 @@ def feed():
         if post['user_id'] != session['user_id']:
             user_following_status[post['user_id']] = is_following(session['user_id'], post['user_id'])
     
+    # --- NEW: Repost info ---
+    repost_counts = {}
+    user_reposts = {}
+    for post in posts:
+        repost_counts[post['id']] = get_repost_count(post['id'])
+        user_reposts[post['id']] = user_has_reposted(session['user_id'], post['id'])
+    
     user_skill_count = len(get_user_skills(session['user_id']))
     user_post_count = get_user_post_count(session['user_id'])
     user_connections_count = get_follower_count(session['user_id'])
@@ -64,6 +72,8 @@ def feed():
                            user_has_liked=user_likes,
                            post_comments=post_comments,
                            user_following_status=user_following_status,
+                           repost_counts=repost_counts,        # <-- Added
+                           user_reposts=user_reposts,          # <-- Added
                            user_skill_count=user_skill_count,
                            user_post_count=user_post_count,
                            user_connections_count=user_connections_count)
@@ -279,4 +289,22 @@ def delete_comment(comment_id):
     from models import delete_comment
     delete_comment(comment_id, session['user_id'])
     flash('Comment deleted', 'success')
+    return redirect(url_for('posts.feed'))
+
+# ============================================================
+# REPOST ROUTE
+# ============================================================
+@posts_bp.route('/repost/<int:post_id>', methods=['POST'])
+def repost_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    content = request.form.get('content', '')
+    success = create_repost(session['user_id'], post_id, content)
+    
+    if success:
+        flash('Post shared to your feed!', 'success')
+    else:
+        flash('You already reposted this', 'danger')
+    
     return redirect(url_for('posts.feed'))
