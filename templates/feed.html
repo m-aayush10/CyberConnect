@@ -386,7 +386,10 @@
                         <p class="cmnt-text">{{ c.content }}</p>
                     </div>
                     {% if session.user_id == c.user_id %}
-                    <a href="{{ url_for('posts.delete_comment', comment_id=c.id) }}" class="btn-del-cmnt" onclick="return confirm('Delete?')" title="Delete">✕</a>
+                    <div class="flex gap-1">
+                        <a href="{{ url_for('posts.edit_comment', comment_id=c.id) }}" class="text-yellow-400 hover:text-yellow-300 text-xs" title="Edit">✏️</a>
+                        <a href="{{ url_for('posts.delete_comment', comment_id=c.id) }}" class="text-red-400 hover:text-red-600 text-xs" onclick="return confirm('Delete?')" title="Delete">🗑️</a>
+                    </div>
                     {% endif %}
                 </div>
                 {% endfor %}
