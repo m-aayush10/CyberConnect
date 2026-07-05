@@ -731,3 +731,38 @@ def get_reposts_by_user(user_id):
             'original_author_name': row[7]
         })
     return reposts
+
+def get_profile_completion(user_id):
+    """Calculate profile completion percentage"""
+    user = get_user_by_id(user_id)
+    if not user:
+        return 0
+    
+    total_items = 5
+    completed = 0
+    
+    # Profile picture
+    if user.get('profile_image') and user['profile_image']:
+        completed += 1
+    
+    # Cover photo
+    if user.get('cover_photo') and user['cover_photo']:
+        completed += 1
+    
+    # Bio
+    if user.get('bio') and len(user['bio'].strip()) > 0:
+        completed += 1
+    
+    # Skills
+    from models import get_user_skills
+    skills = get_user_skills(user_id)
+    if skills and len(skills) > 0:
+        completed += 1
+    
+    # Certifications
+    from models import get_user_certifications
+    certs = get_user_certifications(user_id)
+    if certs and len(certs) > 0:
+        completed += 1
+    
+    return int((completed / total_items) * 100)
