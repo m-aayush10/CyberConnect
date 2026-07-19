@@ -114,8 +114,11 @@
         }
         .cc-user-chip:hover { background: rgba(0,212,255,0.08); }
         .cc-user-avatar {
-            width: 36px; height: 36px;
-            border-radius: 8px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            overflow: hidden;
             background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
             display: flex;
             align-items: center;
@@ -124,7 +127,9 @@
             font-size: 15px;
             color: white;
             flex-shrink: 0;
+            border: 2px solid rgba(0,212,255,.25);
         }
+        
         .cc-user-name {
             font-size: 15px;
             font-weight: 600;
@@ -266,6 +271,34 @@
             border-radius: 12px;
             backdrop-filter: blur(8px);
         }
+
+        /* ── Go to Top Button ── */
+        .go-top-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #8b5cf6);
+            color: white;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+            z-index: 999;
+        }
+        .go-top-btn.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .go-top-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -292,11 +325,29 @@
     {% if session.user_id %}
 
     <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="cc-user-chip">
-        <div class="cc-user-avatar">{{ session.user_name[0]|upper if session.user_name else 'U' }}</div>
+
+        {# ── FIX: Display profile image with cache-busting and onerror fallback ── #}
+        {% if session.user_profile_image %}
+            <img
+                src="{{ session.user_profile_image }}?t={{ session.get('user_profile_updated_at', 0) }}"
+                alt="{{ session.user_name }}"
+                class="cc-user-avatar"
+                onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            >
+            <div class="cc-user-avatar" style="display: none;">
+                {{ session.user_name[0]|upper if session.user_name else 'U' }}
+            </div>
+        {% else %}
+            <div class="cc-user-avatar">
+                {{ session.user_name[0]|upper if session.user_name else 'U' }}
+            </div>
+        {% endif %}
+
         <div>
             <div class="cc-user-name">{{ session.user_name }}</div>
             <div class="cc-user-role">Cybersecurity Student</div>
         </div>
+
     </a>
 
     <!-- SEARCH BOX -->
@@ -325,7 +376,7 @@
         <div class="cc-nav-label" style="margin-top:12px;">Account</div>
 
         <!-- ============================================================ -->
-        <!--  NOTIFICATION BELL (ADDED HERE)                               -->
+        <!--  NOTIFICATION BELL                                            -->
         <!-- ============================================================ -->
         <a href="{{ url_for('notifications.index') }}" class="cc-nav-link" id="notification-bell">
             <svg class="cc-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
@@ -395,6 +446,9 @@
     </div>
 </main>
 
+<!-- Go to Top Button -->
+<button class="go-top-btn" id="goTopBtn" title="Go to top">↑</button>
+
 <script>
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('open');
@@ -427,6 +481,23 @@
 
     // Update count every 30 seconds
     setInterval(updateNotificationCount, 30000);
+
+    // ============================================================
+    //  GO TO TOP BUTTON
+    // ============================================================
+    const goTopBtn = document.getElementById('goTopBtn');
+
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            goTopBtn.classList.add('visible');
+        } else {
+            goTopBtn.classList.remove('visible');
+        }
+    });
+
+    goTopBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 </script>
 </body>
 </html>
