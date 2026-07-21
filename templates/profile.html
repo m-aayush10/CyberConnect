@@ -3,11 +3,11 @@
 {% block content %}
 
 <style>
-    /* Cover */
     .cover-wrap {
         height: 180px; border-radius: 18px; overflow: hidden;
         background: linear-gradient(135deg, #0a1628 0%, #0d2050 40%, #1a1040 100%);
         border: 1px solid rgba(59,130,246,0.15);
+        position: relative;
     }
     .cover-wrap img { width: 100%; height: 100%; object-fit: cover; }
     .cover-overlay {
@@ -20,7 +20,6 @@
                           linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
         background-size: 32px 32px;
     }
-    /* Profile avatar */
     .profile-av-wrap {
         position: absolute;
         bottom: -48px; left: 32px;
@@ -43,8 +42,6 @@
         height: 100%;
         object-fit: cover;
     }
-
-    /* Profile info bar */
     .profile-infobar {
         display: flex; align-items: flex-end; justify-content: space-between;
         flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
@@ -54,125 +51,42 @@
     .profile-name { font-size: 22px; font-weight: 800; color: #f0f6ff; letter-spacing: -0.02em; }
     .profile-email { font-size: 13px; color: #334155; margin-top: 2px; }
     .profile-bio { font-size: 13px; color: #64748b; margin-top: 6px; max-width: 480px; }
-
     .follow-stats { display: flex; gap: 20px; }
     .follow-stat { text-align: center; }
     .follow-stat-num { font-size: 18px; font-weight: 800; color: #60a5fa; }
     .follow-stat-lbl { font-size: 11px; color: #334155; text-transform: uppercase; letter-spacing: 0.06em; }
-
     .profile-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .btn-blue {
-        padding: 9px 20px; background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-        color: white; border: none; border-radius: 10px;
-        font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none;
-        transition: all 0.18s; display: inline-block;
-    }
+    .btn-blue { padding: 9px 20px; background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.18s; display: inline-block; }
     .btn-blue:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.35); text-decoration: none; color: white; }
-    .btn-outline {
-        padding: 9px 20px;
-        background: rgba(8,18,40,0.8);
-        border: 1px solid rgba(59,130,246,0.2);
-        color: #60a5fa; border-radius: 10px;
-        font-size: 13px; font-weight: 600; text-decoration: none;
-        transition: all 0.18s; display: inline-block;
-    }
+    .btn-outline { padding: 9px 20px; background: rgba(8,18,40,0.8); border: 1px solid rgba(59,130,246,0.2); color: #60a5fa; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.18s; display: inline-block; }
     .btn-outline:hover { background: rgba(59,130,246,0.1); text-decoration: none; color: #93c5fd; }
-    .btn-danger {
-        padding: 9px 20px; background: rgba(239,68,68,0.08);
-        border: 1px solid rgba(239,68,68,0.2); color: #f87171;
-        border-radius: 10px; font-size: 13px; font-weight: 600;
-        text-decoration: none; display: inline-block; transition: all 0.18s;
-    }
+    .btn-danger { padding: 9px 20px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #f87171; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-block; transition: all 0.18s; }
     .btn-danger:hover { background: rgba(239,68,68,0.15); text-decoration: none; color: #fca5a5; }
-
-    /* Section card */
-    .section-card {
-        background: rgba(8,18,40,0.8);
-        border: 1px solid rgba(0,80,255,0.1);
-        border-radius: 16px; padding: 24px; margin-bottom: 20px;
-    }
-    .section-head {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 18px;
-    }
+    .section-card { background: rgba(8,18,40,0.8); border: 1px solid rgba(0,80,255,0.1); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
     .section-title { font-size: 14px; font-weight: 800; color: #e2e8f0; }
     .section-icon { margin-right: 8px; }
-
-    /* Tabs */
-    .tabs { display: flex; gap: 2px; margin-bottom: 18px;
-        background: rgba(15,30,70,0.4); border-radius: 10px; padding: 4px; }
-    .tab {
-        flex: 1; text-align: center; padding: 8px 12px;
-        border-radius: 8px; font-size: 13px; font-weight: 600;
-        color: #334155; cursor: pointer; border: none; background: none;
-        transition: all 0.18s;
-    }
+    .tabs { display: flex; gap: 2px; margin-bottom: 18px; background: rgba(15,30,70,0.4); border-radius: 10px; padding: 4px; }
+    .tab { flex: 1; text-align: center; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; border: none; background: none; transition: all 0.18s; }
     .tab.active { background: rgba(59,130,246,0.15); color: #60a5fa; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-
-    /* Follower list */
-    .person-row {
-        display: flex; align-items: center; gap: 12px;
-        padding: 10px 14px; border-radius: 12px;
-        border: 1px solid rgba(0,80,255,0.08);
-        margin-bottom: 8px; text-decoration: none;
-        transition: all 0.15s; background: rgba(15,30,70,0.2);
-    }
+    .person-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(0,80,255,0.08); margin-bottom: 8px; text-decoration: none; transition: all 0.15s; background: rgba(15,30,70,0.2); }
     .person-row:hover { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2); text-decoration: none; }
-    .person-av {
-        width: 36px; height: 36px; border-radius: 10px;
-        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; overflow: hidden;
-    }
+    .person-av { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #1d4ed8, #3b82f6); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; overflow: hidden; }
     .person-av img { width: 100%; height: 100%; object-fit: cover; }
     .person-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
-
-    /* Skills */
     .skills-form { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-    .skills-input {
-        flex: 1; min-width: 180px;
-        background: rgba(15,30,70,0.5);
-        border: 1px solid rgba(0,80,255,0.14); border-radius: 10px;
-        padding: 10px 14px; color: #e2e8f0; font-size: 13px; outline: none;
-        transition: border-color 0.2s;
-    }
+    .skills-input { flex: 1; min-width: 180px; background: rgba(15,30,70,0.5); border: 1px solid rgba(0,80,255,0.14); border-radius: 10px; padding: 10px 14px; color: #e2e8f0; font-size: 13px; outline: none; transition: border-color 0.2s; }
     .skills-input:focus { border-color: #3b82f6; }
     .skills-input::placeholder { color: #1e3a5f; }
-    .skills-select {
-        background: rgba(15,30,70,0.5);
-        border: 1px solid rgba(0,80,255,0.14); border-radius: 10px;
-        padding: 10px 14px; color: #e2e8f0; font-size: 13px;
-        outline: none; cursor: pointer;
-    }
-    .btn-add {
-        padding: 10px 18px;
-        background: rgba(16,185,129,0.12); color: #34d399;
-        border: 1px solid rgba(16,185,129,0.2); border-radius: 10px;
-        font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s;
-    }
+    .skills-select { background: rgba(15,30,70,0.5); border: 1px solid rgba(0,80,255,0.14); border-radius: 10px; padding: 10px 14px; color: #e2e8f0; font-size: 13px; outline: none; cursor: pointer; }
+    .btn-add { padding: 10px 18px; background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s; }
     .btn-add:hover { background: rgba(16,185,129,0.2); }
-    .skill-chip {
-        display: inline-flex; align-items: center; gap: 8px;
-        background: rgba(59,130,246,0.08);
-        border: 1px solid rgba(59,130,246,0.16);
-        color: #60a5fa; font-size: 12px; font-weight: 600;
-        padding: 6px 14px; border-radius: 20px; margin: 4px;
-    }
-    .skill-del {
-        color: #334155; text-decoration: none; font-size: 14px;
-        line-height: 1; transition: color 0.15s;
-    }
+    .skill-chip { display: inline-flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.16); color: #60a5fa; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; margin: 4px; }
+    .skill-del { color: #334155; text-decoration: none; font-size: 14px; line-height: 1; transition: color 0.15s; }
     .skill-del:hover { color: #f87171; }
-
-    /* Cert card */
-    .cert-card {
-        background: rgba(15,30,70,0.25);
-        border: 1px solid rgba(139,92,246,0.15);
-        border-radius: 14px; padding: 16px 20px; margin-bottom: 10px;
-        display: flex; justify-content: space-between; align-items: flex-start;
-    }
+    .cert-card { background: rgba(15,30,70,0.25); border: 1px solid rgba(139,92,246,0.15); border-radius: 14px; padding: 16px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; }
     .cert-title { font-size: 14px; font-weight: 700; color: #a78bfa; }
     .cert-issuer { font-size: 12px; color: #475569; margin-top: 2px; }
     .cert-date { font-size: 11px; color: #334155; margin-top: 4px; }
@@ -184,82 +98,23 @@
     .cert-act.edit:hover { background: rgba(251,191,36,0.15); text-decoration: none; }
     .cert-act.del { color: #f87171; background: rgba(239,68,68,0.08); }
     .cert-act.del:hover { background: rgba(239,68,68,0.15); text-decoration: none; }
-
-    /* Cert form */
-    .cert-form {
-        background: rgba(15,30,70,0.25);
-        border: 1px solid rgba(139,92,246,0.12);
-        border-radius: 14px; padding: 18px; margin-bottom: 16px;
-    }
+    .cert-form { background: rgba(15,30,70,0.25); border: 1px solid rgba(139,92,246,0.12); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
     .cert-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 600px) { .cert-form-grid { grid-template-columns: 1fr; } }
-    .cert-input {
-        background: rgba(15,30,70,0.5);
-        border: 1px solid rgba(139,92,246,0.15);
-        border-radius: 10px; padding: 10px 14px;
-        color: #e2e8f0; font-size: 13px; outline: none; width: 100%;
-        transition: border-color 0.2s;
-    }
+    .cert-input { background: rgba(15,30,70,0.5); border: 1px solid rgba(139,92,246,0.15); border-radius: 10px; padding: 10px 14px; color: #e2e8f0; font-size: 13px; outline: none; width: 100%; transition: border-color 0.2s; }
     .cert-input:focus { border-color: #8b5cf6; }
     .cert-input::placeholder { color: #1e3a5f; }
-    .btn-add-cert {
-        margin-top: 12px; padding: 10px 18px;
-        background: rgba(139,92,246,0.12); color: #a78bfa;
-        border: 1px solid rgba(139,92,246,0.2);
-        border-radius: 10px; font-size: 13px; font-weight: 700;
-        cursor: pointer; transition: all 0.18s;
-    }
+    .btn-add-cert { margin-top: 12px; padding: 10px 18px; background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s; }
     .btn-add-cert:hover { background: rgba(139,92,246,0.2); }
-
-    /* Posts in profile */
-    .mini-post {
-        background: rgba(15,30,70,0.2);
-        border: 1px solid rgba(0,80,255,0.08);
-        border-radius: 12px; padding: 14px; margin-bottom: 10px;
-    }
+    .mini-post { background: rgba(15,30,70,0.2); border: 1px solid rgba(0,80,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
     .mini-post-text { font-size: 13px; color: #64748b; line-height: 1.6; }
     .mini-post-ts { font-size: 11px; color: #1e3a5f; margin-top: 6px; }
-
-    /* Avatar wrapper fix – prevent clipping */
-    .cover-avatar-wrapper {
-        position: relative;
-        margin-bottom: 60px;
-    }
-    .cover-avatar-wrapper .cover-wrap {
-        height: 180px;
-        border-radius: 18px;
-        overflow: hidden;
-        background: linear-gradient(135deg, #0a1628 0%, #0d2050 40%, #1a1040 100%);
-        border: 1px solid rgba(59,130,246,0.15);
-        position: relative;
-    }
-    .cover-avatar-wrapper .profile-av-wrap {
-        position: absolute;
-        bottom: -48px;
-        left: 32px;
-        width: 88px;
-        height: 88px;
-        border-radius: 20px;
-        border: 3px solid rgba(59,130,246,0.4);
-        background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-        font-weight: 800;
-        color: white;
-        overflow: hidden;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        z-index: 2;
-    }
-    .cover-avatar-wrapper .profile-av-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+    .cover-avatar-wrapper { position: relative; margin-bottom: 60px; }
+    .cover-avatar-wrapper .cover-wrap { height: 180px; border-radius: 18px; overflow: hidden; background: linear-gradient(135deg, #0a1628 0%, #0d2050 40%, #1a1040 100%); border: 1px solid rgba(59,130,246,0.15); position: relative; }
+    .cover-avatar-wrapper .profile-av-wrap { position: absolute; bottom: -48px; left: 32px; width: 88px; height: 88px; border-radius: 20px; border: 3px solid rgba(59,130,246,0.4); background: linear-gradient(135deg, #1d4ed8, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; color: white; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 2; }
+    .cover-avatar-wrapper .profile-av-wrap img { width: 100%; height: 100%; object-fit: cover; }
 </style>
 
-<!-- Cover + Avatar (fixed wrapper) -->
 <div class="cover-avatar-wrapper">
     <div class="cover-wrap">
         <div class="cover-grid"></div>
@@ -272,7 +127,6 @@
     </div>
 </div>
 
-<!-- Info bar -->
 <div class="profile-infobar">
     <div>
         <div class="profile-name">{{ user.name }}</div>
@@ -281,18 +135,9 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:14px;">
         <div class="follow-stats">
-            <div class="follow-stat">
-                <div class="follow-stat-num">{{ follower_count }}</div>
-                <div class="follow-stat-lbl">Followers</div>
-            </div>
-            <div class="follow-stat">
-                <div class="follow-stat-num">{{ following_count }}</div>
-                <div class="follow-stat-lbl">Following</div>
-            </div>
-            <div class="follow-stat">
-                <div class="follow-stat-num">{{ posts_count }}</div>
-                <div class="follow-stat-lbl">Posts</div>
-            </div>
+            <div class="follow-stat"><div class="follow-stat-num">{{ follower_count }}</div><div class="follow-stat-lbl">Followers</div></div>
+            <div class="follow-stat"><div class="follow-stat-num">{{ following_count }}</div><div class="follow-stat-lbl">Following</div></div>
+            <div class="follow-stat"><div class="follow-stat-num">{{ posts_count }}</div><div class="follow-stat-lbl">Posts</div></div>
         </div>
         <div class="profile-actions">
             {% if session.user_id == user.id %}
@@ -308,7 +153,6 @@
     </div>
 </div>
 
-<!-- Followers / Following tabs -->
 <div class="section-card">
     <div class="tabs">
         <button class="tab active" onclick="switchTab('followers', this)">👥 Followers ({{ follower_count }})</button>
@@ -317,10 +161,7 @@
     <div class="tab-panel active" id="tab-followers">
         {% for f in followers %}
         <a href="{{ url_for('profile.view_profile', user_id=f.id) }}" class="person-row">
-            <div class="person-av">
-                {% if f.profile_image %}<img src="{{ f.profile_image }}">
-                {% else %}{{ f.name[0]|upper }}{% endif %}
-            </div>
+            <div class="person-av">{% if f.profile_image %}<img src="{{ f.profile_image }}">{% else %}{{ f.name[0]|upper }}{% endif %}</div>
             <span class="person-name">{{ f.name }}</span>
         </a>
         {% else %}<p style="color:#334155;font-size:13px;text-align:center;padding:20px;">No followers yet.</p>{% endfor %}
@@ -328,21 +169,15 @@
     <div class="tab-panel" id="tab-following">
         {% for f in following %}
         <a href="{{ url_for('profile.view_profile', user_id=f.id) }}" class="person-row">
-            <div class="person-av">
-                {% if f.profile_image %}<img src="{{ f.profile_image }}">
-                {% else %}{{ f.name[0]|upper }}{% endif %}
-            </div>
+            <div class="person-av">{% if f.profile_image %}<img src="{{ f.profile_image }}">{% else %}{{ f.name[0]|upper }}{% endif %}</div>
             <span class="person-name">{{ f.name }}</span>
         </a>
         {% else %}<p style="color:#334155;font-size:13px;text-align:center;padding:20px;">Not following anyone yet.</p>{% endfor %}
     </div>
 </div>
 
-<!-- Skills -->
 <div class="section-card">
-    <div class="section-head">
-        <span class="section-title"><span class="section-icon">🛡️</span> Cybersecurity Skills</span>
-    </div>
+    <div class="section-head"><span class="section-title"><span class="section-icon">🛡️</span> Cybersecurity Skills</span></div>
     {% if session.user_id == user.id %}
     <form method="POST" action="{{ url_for('profile.add_skill') }}" class="skills-form" onsubmit="return !!document.getElementById('sname').value.trim()">
         <input type="text" id="sname" name="skill_name" class="skills-input" placeholder="e.g. Penetration Testing, Python, Wireshark…" required>
@@ -357,21 +192,17 @@
     {% endif %}
     <div>
         {% for s in user.skills %}
-        <span class="skill-chip">
-            {{ s.skill_name }} <span style="color:#334155;font-size:10px;">({{ s.level }})</span>
+        <span class="skill-chip">{{ s.skill_name }} <span style="color:#122c51;font-size:10px;">({{ s.level }})</span>
             {% if session.user_id == user.id %}
             <a href="{{ url_for('profile.delete_skill', skill_id=s.id) }}" class="skill-del" onclick="return confirm('Remove skill?')" title="Remove">×</a>
             {% endif %}
         </span>
-        {% else %}<p style="color:#334155;font-size:13px;">No skills added yet.</p>{% endfor %}
+        {% else %}<p style="color:#122c51;font-size:13px;">No skills added yet.</p>{% endfor %}
     </div>
 </div>
 
-<!-- Certifications -->
 <div class="section-card">
-    <div class="section-head">
-        <span class="section-title"><span class="section-icon">🎓</span> Certifications</span>
-    </div>
+    <div class="section-head"><span class="section-title"><span class="section-icon">🎓</span> Certifications</span></div>
     {% if session.user_id == user.id %}
     <div class="cert-form">
         <form method="POST" action="{{ url_for('profile.add_certification') }}">
@@ -403,7 +234,6 @@
     {% else %}<p style="color:#334155;font-size:13px;">No certifications added yet.</p>{% endfor %}
 </div>
 
-<!-- Posts -->
 <div class="section-card">
     <div class="section-head"><span class="section-title">📝 Posts</span></div>
     {% for p in user_posts %}
@@ -413,32 +243,6 @@
     </div>
     {% else %}<p style="color:#334155;font-size:13px;">No posts yet.</p>{% endfor %}
 </div>
-
-<!-- ============================================================ -->
-<!-- DELETE ACCOUNT BUTTON (NEW) -->
-<!-- ============================================================ -->
-{% if session.user_id == user.id %}
-<div class="mt-6">
-    <button onclick="confirmDelete()" class="bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm inline-block">
-        🗑️ Delete Account
-    </button>
-</div>
-
-<script>
-function confirmDelete() {
-    if (confirm('⚠️ Are you sure you want to permanently delete your account? This cannot be undone!')) {
-        if (confirm('All your posts, comments, skills, certifications, and followers will be deleted. Continue?')) {
-            fetch("{{ url_for('profile.delete_account') }}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            }).then(() => {
-                window.location.href = "{{ url_for('index') }}";
-            });
-        }
-    }
-}
-</script>
-{% endif %}
 
 <script>
 function switchTab(name, btn) {

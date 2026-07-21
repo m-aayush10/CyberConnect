@@ -5,7 +5,19 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="glass-card rounded-2xl p-6">
-        <h2 class="text-2xl font-bold mb-6 cyber-text">Edit Profile</h2>
+        <h2 class="text-2xl font-bold mb-6 cyber-text">✏️ Edit Profile</h2>
+        
+        <!-- Cover Photo Section -->
+        <div class="mb-6">
+            <label class="block text-cyan-400 font-bold mb-2">Cover Photo</label>
+            {% if user.cover_photo %}
+            <img src="{{ user.cover_photo }}" class="w-full h-32 object-cover rounded-lg mb-2">
+            {% endif %}
+            <form method="POST" action="{{ url_for('profile.upload_cover') }}" enctype="multipart/form-data">
+                <input type="file" name="cover_photo" accept="image/*" class="bg-gray-800 border border-gray-700 rounded-lg p-2 text-white w-full">
+                <button type="submit" class="btn-cyber mt-2 px-4 py-1 rounded text-sm">Upload Cover</button>
+            </form>
+        </div>
         
         <!-- Profile Picture Section -->
         <div class="mb-6 text-center">
@@ -20,21 +32,25 @@
                 {% endif %}
             </div>
             <form method="POST" action="{{ url_for('profile.upload_picture') }}" enctype="multipart/form-data">
-                <input type="file" name="profile_pic" accept="image/*" required class="bg-gray-800 border border-gray-700 rounded-lg p-2 text-white w-full">
+                <input type="file" name="profile_pic" accept="image/*" class="bg-gray-800 border border-gray-700 rounded-lg p-2 text-white w-full">
                 <button type="submit" class="btn-cyber mt-2 px-4 py-1 rounded text-sm">Upload Picture</button>
             </form>
         </div>
         
         <hr class="border-gray-700 my-4">
         
-        <!-- Bio Edit Form -->
-        <form method="POST">
+        <!-- MAIN EDIT FORM – submits to /profile/edit -->
+        <form method="POST" action="{{ url_for('profile.edit_profile') }}">
+            <div class="mb-4">
+                <label class="block text-cyan-400 font-bold mb-2">Full Name</label>
+                <input type="text" name="name" value="{{ user.name }}" required class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">
+            </div>
             <div class="mb-4">
                 <label class="block text-cyan-400 font-bold mb-2">Bio</label>
                 <textarea name="bio" rows="4" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 text-white">{{ user.bio or '' }}</textarea>
             </div>
             <div class="flex gap-3">
-                <button type="submit" class="btn-cyber px-6 py-2 rounded">Save Bio</button>
+                <button type="submit" class="btn-cyber px-6 py-2 rounded">💾 Save Changes</button>
                 <a href="{{ url_for('profile.view_profile', user_id=session.user_id) }}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded transition">Cancel</a>
             </div>
         </form>
