@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, request, flash, redirect, url_for, jsonify
 from models import get_user_by_id, update_user_profile
 import os
-import time
+import time  # <<<--- ADDED (if not already imported)
 from werkzeug.utils import secure_filename
 
 profile_bp = Blueprint('profile', __name__)
@@ -97,7 +97,7 @@ def edit_profile():
             return redirect(url_for('profile.edit_profile'))
         
         update_user_profile(session['user_id'], name=name, bio=bio)
-        
+
         # Update session name
         session['user_name'] = name
         
@@ -215,6 +215,9 @@ def delete_certification(cert_id):
     flash('Certification removed', 'success')
     return redirect(url_for('profile.view_profile', user_id=session['user_id']))
 
+# ============================================================
+# UPLOAD PICTURE (with cache‑busting)
+# ============================================================
 @profile_bp.route('/upload_picture', methods=['POST'])
 def upload_picture():
     if 'user_id' not in session:
@@ -239,6 +242,7 @@ def upload_picture():
         from models import update_profile_picture
         update_profile_picture(session['user_id'], f'/{UPLOAD_FOLDER}/{filename}')
         session['user_profile_image'] = f'/{UPLOAD_FOLDER}/{filename}'
+        session['user_profile_updated_at'] = int(time.time())  # <<<--- ADDED
         
         flash('Profile picture updated!', 'success')
     else:

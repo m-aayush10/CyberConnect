@@ -16,9 +16,7 @@ def login():
 
         user = get_user_by_email(email)
 
-        # ==========================
-        # DEBUG
-        # ==========================
+
         print("\n========== LOGIN DEBUG ==========")
         print("Email:", email)
         print("User from DB:", user)
@@ -30,7 +28,6 @@ def login():
             print("User not found")
 
         print("=================================\n")
-        # ==========================
 
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             session['user_id'] = user['id']
