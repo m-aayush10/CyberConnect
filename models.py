@@ -10,6 +10,15 @@ def get_user_by_email(email):
         return dict(zip(columns, user))
     return None
 
+def create_post(user_id, content, image_url):
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "INSERT INTO posts (user_id, content, image_url) VALUES (%s, %s, %s)",
+        (user_id, content, image_url)
+    )
+    mysql.connection.commit()
+    cur.close()
+
 def get_user_by_id(user_id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT id, name, email, bio, profile_image, cover_photo FROM users WHERE id = %s", (user_id,))
